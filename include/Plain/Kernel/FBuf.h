@@ -50,22 +50,22 @@ void Framebuffer_Intiailize(struct Framebuffer *this, /* buffer to initialize */
                             uint32_t w, uint32_t h,   /* dimensions in pixels */
                             struct Font *f            /* font to use */);
                             
-static inline void Framebuffer_Pixel(struct Framebuffer *this,
-                                     uint32_t x, uint32_t y,
-                                     uint32_t col);
+void Framebuffer_Pixel(struct Framebuffer *this,
+                       uint32_t x, uint32_t y,
+                       uint32_t col);
 
-static inline void Framebuffer_Rect(struct Framebuffer *this,
-                                    uint32_t x, uint32_t y,
-                                    uint32_t w, uint32_t h,
-                                    uint32_t col);
+void Framebuffer_Rect(struct Framebuffer *this,
+                      uint32_t x, uint32_t y,
+                      uint32_t w, uint32_t h,
+                      uint32_t col);
                                     
-static inline void Framebuffer_Char(struct Framebuffer *this,
-                                    uint32_t x, uint32_t y,
-                                    char c,
-                                    uint32_t col);
+void Framebuffer_Char(struct Framebuffer *this,
+                      uint32_t x, uint32_t y,
+                      char c,
+                      uint32_t col);
 
-static inline void Framebuffer_Text(struct Framebuffer *this,
-                                    uint32_t x, uint32_t y,
-                                    const char *string,
-                                    uint32_t color);
+void Framebuffer_Text(struct Framebuffer *this,
+                      uint32_t x, uint32_t y,
+                      const char *string,
+                      uint32_t color);
 #endif

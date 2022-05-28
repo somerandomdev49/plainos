@@ -35,17 +35,17 @@ void Framebuffer_Intiailize(struct Framebuffer *this, /* buffer to initialize */
     this->font = f;
 }
 
-static inline void Framebuffer_Pixel(struct Framebuffer *this,
-                                     uint32_t x, uint32_t y,
-                                     uint32_t col)
+void Framebuffer_Pixel(struct Framebuffer *this,
+                       uint32_t x, uint32_t y,
+                       uint32_t col)
 {
     this->buffer[x + y * this->width] = col;
 }
 
-static inline void Framebuffer_Rect(struct Framebuffer *this,
-                                    uint32_t x, uint32_t y,
-                                    uint32_t w, uint32_t h,
-                                    uint32_t col)
+void Framebuffer_Rect(struct Framebuffer *this,
+                      uint32_t x, uint32_t y,
+                      uint32_t w, uint32_t h,
+                      uint32_t col)
 {
     const uint32_t fw = this->width;
     const uint32_t idx_end = (y + h) * fw + x;
@@ -54,18 +54,18 @@ static inline void Framebuffer_Rect(struct Framebuffer *this,
         this->buffer[idx + i] = col;
 }
 
-static inline void Framebuffer_Char(struct Framebuffer *this,
-                                    uint32_t x, uint32_t y,
-                                    char c,
-                                    uint32_t col)
+void Framebuffer_Char(struct Framebuffer *this,
+                      uint32_t x, uint32_t y,
+                      char c,
+                      uint32_t col)
 {
     BM_Font_RenderSymbol((struct BM_Font*)this->font, this, x, y, c, col);
 }
 
-static inline void Framebuffer_Text(struct Framebuffer *this,
-                                    uint32_t x, uint32_t y,
-                                    const char *string,
-                                    uint32_t color)
+void Framebuffer_Text(struct Framebuffer *this,
+                      uint32_t x, uint32_t y,
+                      const char *string,
+                      uint32_t color)
 {
     uint32_t px = 0, py = 0;
     while(*string)
