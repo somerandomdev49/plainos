@@ -1,16 +1,16 @@
 
 target = x86_64-pc-none-elf
-cflags = -Wall -Wno-unused-function -ffreestanding -nostdlib -target $target
+cflags = -Wall -Wno-unused-function -nostdlib -target $target
 
 rule cc
-    command = clang -c $in -o $out $cflags -MD -MF $out.d -fpic -fno-stack-protector -Iinclude
+    command = clang -c $in -o $out $cflags -MD -MF $out.d -fpic -fno-stack-protector -Iinclude -ffreestanding
     depfile = $out.d
 
 rule as
-    command = clang -c $in -o $out $cflags -fpic -fno-stack-protector
+    command = clang -c $in -o $out $cflags
 
 rule ld
-    command = ld.lld $in -o $out -T linker.ld
+    command = ld.lld $in -o $out -T linker.ld -ffreestanding
 
 rule sh
     command = $in

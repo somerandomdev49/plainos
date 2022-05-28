@@ -1,0 +1,4 @@
+-xc
+-Iinclude
+-ffreestanding
+-nostdlib
