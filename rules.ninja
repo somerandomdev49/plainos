@@ -1,0 +1,19 @@
+
+target = x86_64-pc-none-elf
+cflags = -Wall -Wno-unused-function -ffreestanding -nostdlib -target $target
+
+rule cc
+    command = clang -c $in -o $out $cflags -MD -MF $out.d -fpic -fno-stack-protector -Iinclude
+    depfile = $out.d
+
+rule as
+    command = clang -c $in -o $out $cflags -fpic -fno-stack-protector
+
+rule ld
+    command = ld.lld $in -o $out -T linker.ld
+
+rule sh
+    command = $in
+
+rule mkbootimg
+    command = mkbootimg $in $out

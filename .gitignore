@@ -1,0 +1,8 @@
+*#
+*~
+.*cache
+build.ninja
+.ninja*
+compile_commands.json
+*.local
+build

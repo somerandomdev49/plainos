@@ -1,0 +1,11 @@
+{
+    "disksize": 128,
+    "align": 1024,
+    "iso9660": true,
+    "config": "boot/config",
+    "initrd": { "type": "tar", "gzip": true, "directory": "boot" },
+    "partitions": [
+        { "type": "boot", "size": 16 },
+        { "type": "tar", "size": 128, "name": "Partition A" }
+    ]
+}
