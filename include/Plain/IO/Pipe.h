@@ -1,5 +1,5 @@
-#ifndef PLAIN_TTY_
-#define PLAIN_TTY_
+#ifndef PLAIN_PIPE_
+#define PLAIN_PIPE_
 #include <Plain/Common.h>
 
 /*- Provider and subscriver of any text data -*/
@@ -30,8 +30,8 @@ void Pipe_Initialize(struct Pipe *this)
 /*- Pipe pointer shorthand -*/
 typedef struct Pipe *Pipe;
 
-void WriteChar(Pipe tty, char c);
-void Write(Pipe tty, const char *str);
-void WriteLine(Pipe tty, const char *str);
+void WriteChar(Pipe to, char c);
+void Write(Pipe to, const char *str);
+void WriteLine(Pipe to, const char *str);
 
 #endif
