@@ -1,6 +1,6 @@
 #include <Plain/Common.h>
 #include <Plain/Kernel/FBuf.h>
-#include <Plain/IO/TTY.h>
+#include <Plain/IO/Pipe.h>
 #include <bootboot.h>
 
 /*-[ Plain/Common.h ]-----------------------------------------------------------*/
@@ -18,22 +18,22 @@ void Provider_Provide(struct Provider *this,
         this->subs[i]->onget(this->subs[i]->this, this, data);
 }
 
-/*-[ Plain/IO/TTY.h ]-----------------------------------------------------------*/
+/*-[ Plain/IO/Pipe.h ]-----------------------------------------------------------*/
 
-void WriteChar(TTY tty, char c)
+void WriteChar(Pipe pipe, char c)
 {
-    tty->sub.onget(tty->sub.this, NULL, (void*)(uintptr_t)c);
+    pipe->sub.onget(pipe->sub.this, NULL, (void*)(uintptr_t)c);
 }
 
-void Write(TTY tty, const char *str)
+void Write(Pipe pipe, const char *str)
 {
-    while(*str) WriteChar(tty, *str++);
+    while(*str) WriteChar(pipe, *str++);
 }
 
-void WriteLine(TTY tty, const char *str)
+void WriteLine(Pipe pipe, const char *str)
 {
-    Write(tty, str);
-    WriteChar(tty, '\n');
+    Write(pipe, str);
+    WriteChar(pipe, '\n');
 }
 
 /*-[ Plain/Kernel/Display.h ]---------------------------------------------------*/
@@ -154,29 +154,34 @@ static void InitDisplay()
     Display_Initialize(&gDisplay, &gDisplay_Fb);
 }
 
-static struct TTY gTTYs[2];
-static void InitTTYs()
+static struct Pipe gPipes[2];
+static void InitPipes()
 {
-    TTY_Initialize(&gTTYs[0]);
-    TTY_Initialize(&gTTYs[1]);
+    Pipe_Initialize(&gPipes[0]);
+    Pipe_Initialize(&gPipes[1]);
 }
 
-/* Return a global TTY */
-static inline TTY GetTTY(uint32_t global_id)
-{ return &gTTYs[global_id]; }
+/* Return a global pipe */
+static inline Pipe GetPipe(uint32_t global_id)
+{ return &gPipes[global_id]; }
+
+extern void Arch_InitInterrupts();
 
 void _start()
 {
     InitDisplay();
-    InitTTYs();
+    InitPipes();
     
-    /* this will render the tty buffer as it gets updated */
-    Provider_Subscribe(&GetTTY(0)->prov, &gDisplay.adp.sub);
+    /* this will render the Pipe as it gets updated */
+    Provider_Subscribe(&GetPipe(0)->prov, &gDisplay.adp.sub);
     
-    WriteLine(GetTTY(0), "Hello!");
+    Write(GetPipe(0), "Initializing Interrupts... ");
+    Arch_InitInterrupts();
+    Write(GetPipe(0), "Done!");
 
     for(;;) asm("hlt");
 }
+
 
 
 
@@ -193,7 +198,7 @@ void _start()
 /*- ls implementation -*/
 #include <Plain/FS/Directory.h>
 #include <Plain/FS/Path.h>
-#include <Plain/IO/TTY.h>
+#include <Plain/IO/Pipe.h>
 #include <Plain/UI/Args.h>
 
 void Main()
@@ -214,7 +219,7 @@ void Main()
     const char **children = DirectoryInfo_GetChildren(&info);
 
     for(unsigned int i = 0; childen[i]; ++i)
-        WriteFormat(GetLocalTTY(/* id = */ 0), "%s\n", children[i]);
+        WriteFormat(GetLocalPipe(/* id = */ 0), "%s\n", children[i]);
 }
 
 // Example:

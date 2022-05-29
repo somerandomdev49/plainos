@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define ATTRIBUTE(...) __attribute__((__VA_ARGS__))
+#define _ATTRIBUTE(...) __attribute__((__VA_ARGS__))
 
 /* fwd */ struct Subscriber;
 /* fwd */ struct Provider;
