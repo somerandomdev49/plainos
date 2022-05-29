@@ -3,7 +3,7 @@
 #include <Plain/Common.h>
 
 /*- Provider and subscriver of any text data -*/
-struct TTY
+struct Pipe
 {
     struct Provider prov;
     struct Subscriber sub;
@@ -11,27 +11,27 @@ struct TTY
 };
 
 /* Subscriber : Called on get */
-static void TTY_OnGet_(struct TTY *this,
-                       void *provider,
-                       void *ch)
+static void Pipe_OnGet_(struct Pipe *this,
+                        void *provider,
+                        void *ch)
 {
     Provider_Provide(&this->prov, ch);
 }
 
 
-void TTY_Initialize(struct TTY *this)
+void Pipe_Initialize(struct Pipe *this)
 {
     this->prov.count = 0;
     this->prov.subs = this->prov_data_;
     this->sub.this = this;
-    this->sub.onget = (Subscriber_OnGet)&TTY_OnGet_;
+    this->sub.onget = (Subscriber_OnGet)&Pipe_OnGet_;
 }
 
-/*- TTY pointer shorthand -*/
-typedef struct TTY *TTY;
+/*- Pipe pointer shorthand -*/
+typedef struct Pipe *Pipe;
 
-void WriteChar(TTY tty, char c);
-void Write(TTY tty, const char *str);
-void WriteLine(TTY tty, const char *str);
+void WriteChar(Pipe tty, char c);
+void Write(Pipe tty, const char *str);
+void WriteLine(Pipe tty, const char *str);
 
 #endif
