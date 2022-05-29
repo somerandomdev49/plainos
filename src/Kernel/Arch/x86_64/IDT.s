@@ -1,15 +1,15 @@
 
 /*-[ IDT Loading ]--------------------------------------------------------------*/
 idtr:
-    idtr.size:   .word 0 /* size */
-    idtr.offset: .quad 0 /* offset */
+    idtr.size:   .word 0            /* size */
+    idtr.offset: .quad 0            /* offset */
 
 .global Arch_x86_64_LoadIDT
-Arch_x86_64_LoadIDT:               /* rdi: pointer, si: size */
-    subw    1,      %si            /* IDTR requires size to be 1 less */
-    movw    %si,    (idtr.size)    /* put the size */
-    movq    %rdi,   (idtr.offset)  /* put the offset */
-    lidtq   (idtr)                 /* load the IDT */
+Arch_x86_64_LoadIDT:                /* rdi: pointer, si: size */
+    subw 1, %si                     /* IDTR requires size to be 1 less */
+    movw %si, (idtr.size)           /* put the size */
+    movq %rdi, (idtr.offset)        /* put the offset */
+    lidtq (idtr)                    /* load the IDT */
     retq
 
 /*-[ Push/Pop ]-----------------------------------------------------------------*/
@@ -23,10 +23,26 @@ Arch_x86_64_LoadIDT:               /* rdi: pointer, si: size */
     push %rbp
     push %rsi
     push %rdi
+    push %r8
+    push %r9
+    push %r10
+    push %r11
+    push %r12
+    push %r13
+    push %r14
+    push %r15
 .endm
 
 /* Pop all 64-bit registers (no rXX for now) */
 .macro popallq
+    push %r15
+    push %r14
+    push %r13
+    push %r12
+    push %r11
+    push %r10
+    push %r9
+    push %r8
     pop %rdi
     pop %rsi
     pop %rbp
@@ -40,34 +56,19 @@ Arch_x86_64_LoadIDT:               /* rdi: pointer, si: size */
 
 .extern Arch_x86_64_ISR_Handler
 isr_common:                     /* common ISR handler */
-    pushallq                    /* push all registers */
-
-    /* save CPU State */
-    mov %ds, %ax                 /* save ds into ax */
-    pushq %rax                   /* push rax (ax ^^) */
-
-    /* set the segdefs to kernel segment descriptor */
-    movw $0x10, %ax             /* using ax here because imm not allowed */
-    movw %ax, %ds
-    movw %ax, %es
-    movw %ax, %fs
-    movw %ax, %gs
+    /*cld                         /* SysV ABI req ig? */
+    /* pushallq                 /* push all registers */
 
     /* call the C handler */
-    cld                         /* SysV ABI req ig? */
     movq %rsp, %rdi             /* first C argument: pointer to struct */
     callq Arch_x86_64_ISR_Handler
 
-    /* restore CPU state */
-    popq %rax                   /* pop rax (CPU state) */
-    movw %ax, %ds
-    movw %ax, %es
-    movw %ax, %fs
-    movw %ax, %gs
+.L0:hlt
+    jmp .L0
 
-    popallq                     /* pop all saved registers */
+    /* popallq                  /* pop all saved registers */
 
-    addq $8, %rsp               /* pop pushed error code and ISR number */
+    addq $16, %rsp              /* pop pushed error code and ISR number */
     iretq                       /* return from ISR */
 
 
@@ -77,7 +78,7 @@ isr_common:                     /* common ISR handler */
 .global Arch_x86_64_ISR\i
 .align 4
 Arch_x86_64_ISR\i:
-    pushq \i                    /* push ISR index */
+    /*pushq \i                    /* push ISR index */
     jmp isr_common              /* jump to common handler */
 .endm
 
@@ -87,7 +88,7 @@ Arch_x86_64_ISR\i:
 .align 4
 Arch_x86_64_ISR\i:
     pushq 0                     /* push our own "error code" instead */
-    pushq \i                     /* push ISR index */
+    /*pushq \i                    /* push ISR index */
     jmp isr_common              /* jump to common handler */
 .endm
 

@@ -18,11 +18,20 @@ typedef struct Pipe *Pipe;
 void WriteChar(Pipe to, char c);
 void Write(Pipe to, const char *str);
 void WriteLine(Pipe to, const char *str);
-static inline void WriteUInt64(Pipe to, uint64_t v)
+
+static inline void WriteUInt64_B16(Pipe to, uint64_t v)
 {
-    if(v >= 10) WriteUInt64(to, v / 10);
+    if(v >= 16) WriteUInt64_B16(to, v / 16);
+    WriteChar(to, "0123456789ABCDEF"[v % 16]);
+}
+
+static inline void WriteUInt64_B10(Pipe to, uint64_t v)
+{
+    if(v >= 10) WriteUInt64_B10(to, v / 10);
     WriteChar(to, '0' + (v % 10));
 }
+static inline void WriteUInt64(Pipe to, uint64_t v)
+{ Write(to, "0x"); WriteUInt64_B16(to, v); }
 
 Pipe GetGlobalPipe(uint32_t global_id);
 Pipe GetLocalPipe(uint32_t local_id);

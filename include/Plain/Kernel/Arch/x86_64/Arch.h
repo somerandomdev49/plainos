@@ -17,7 +17,7 @@ struct Arch_x86_64_IntDesc
            uint16_t pres : 1; /* present bit, 1 */
        } opts;
        struct {
-           uint8_t ist;
+           uint8_t zero;
            uint8_t type;
        } attrs;
    };
@@ -26,19 +26,28 @@ struct Arch_x86_64_IntDesc
    uint32_t zero; /* reserved */
 } _ATTRIBUTE(packed);
 
+_Static_assert(sizeof(struct Arch_x86_64_IntDesc) == 16, "");
+
 /*- Registers -*/
 struct Arch_x86_64_Frame
 {
-    uint64_t ds;
-    uint64_t rdi,
-             rsi,
-             rbp,
-             rdx,
-             rcx,
-             rbx,
-             rax;
-    uint64_t no, err;
-    uint64_t rip, cs, eflags, unused, ss;
+    // uint64_t r15,
+    //          r14,
+    //          r13,
+    //          r12,
+    //          r11,
+    //          r10,
+    //          r9,
+    //          r8,
+    //          rdi,
+    //          rsi,
+    //          rbp,
+    //          rdx,
+    //          rcx,
+    //          rbx,
+    //          rax;
+    uint64_t err;
+    uint64_t rip, cs, rfl, rsp;
 };
 
 /* loads an IDT at ptr, with size `size` */

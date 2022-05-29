@@ -13,7 +13,7 @@ static void InitGate(struct Arch_x86_64_IntDesc *g,
 
     g->zero = 0;
     g->sel = 0x08;
-    g->attrs.ist = 0;
+    g->attrs.zero = 0;
     g->attrs.type = 0x8E; // Trap Gate
 
     // g->opts.ist = 0;
@@ -23,14 +23,6 @@ static void InitGate(struct Arch_x86_64_IntDesc *g,
     // g->opts.pres = 1;
 }
 
-struct IntFrame
-{
-    uint64_t ip;
-    uint64_t cs;
-    uint64_t flags;
-    uint64_t sp;
-    uint64_t ss;
-};
 
 const char *Arch_x86_64_ExcNames[32] = {
     "Divide By Zero",
@@ -118,7 +110,7 @@ void Arch_InitInterrupts()
     INIT_GATE(30);
     INIT_GATE(31);
 
-    Arch_x86_64_LoadIDT(gIDT, sizeof(gIDT));
+    Arch_x86_64_LoadIDT(gIDT, (uint16_t)sizeof(gIDT));
 
     Arch_x86_64_RegisterInterrupt(14, &PageFault_Handler);
     Arch_x86_64_RegisterInterrupt(13, &GeneralProtFault_Handler);
@@ -137,11 +129,31 @@ void Arch_x86_64_RegisterInterrupt(uint8_t n,
 
 #include <Plain/IO/Pipe.h>
 
+void WriteFrame(Pipe p, struct Arch_x86_64_Frame *frame)
+{
+    // Write(p, "  RDI = "); WriteUInt64(p, frame->rdi);    WriteChar(p, '\n');
+    // Write(p, "  RSI = "); WriteUInt64(p, frame->rsi);    WriteChar(p, '\n');
+    // Write(p, "  RBP = "); WriteUInt64(p, frame->rbp);    WriteChar(p, '\n');
+    // Write(p, "  RDX = "); WriteUInt64(p, frame->rdx);    WriteChar(p, '\n');
+    // Write(p, "  RCX = "); WriteUInt64(p, frame->rcx);    WriteChar(p, '\n');
+    // Write(p, "  RBX = "); WriteUInt64(p, frame->rbx);    WriteChar(p, '\n');
+    // Write(p, "  RAX = "); WriteUInt64(p, frame->rax);    WriteChar(p, '\n');
+    // Write(p, "  TEST= "); WriteUInt64(p, frame->test);   WriteChar(p, '\n');
+    Write(p, "  ERR = "); WriteUInt64(p, frame->err);    WriteChar(p, '\n');
+    // Write(p, "  NO  = "); WriteUInt64(p, frame->no );    WriteChar(p, '\n');
+    Write(p, "  RIP = "); WriteUInt64(p, frame->rip);    WriteChar(p, '\n');
+    Write(p, "  CS  = "); WriteUInt64(p, frame->cs );    WriteChar(p, '\n');
+    Write(p, "  RFL = "); WriteUInt64(p, frame->rfl); WriteChar(p, '\n');
+    Write(p, "  RSP = "); WriteUInt64(p, frame->rsp);    WriteChar(p, '\n');
+}
+
 void Arch_x86_64_ISR_Handler(struct Arch_x86_64_Frame *frame)
 {
-    uint64_t isr = frame->no;
-    Write(GetGlobalPipe(0), "ISR ");
-    WriteUInt64(GetGlobalPipe(0), isr);
-    WriteLine(GetGlobalPipe(0), "...");
-    // if(handlers[isr] != NULL) handlers[isr](isr, regs);
+    // uint64_t isr = frame->no;
+    Pipe p = GetGlobalPipe(0);
+    WriteLine(p, "Interrupt, Frame:");
+    WriteFrame(p, frame);
+
+    /* if(handlers[isr] != NULL) handlers[isr](isr, regs); */
+    /* TODO */
 }
