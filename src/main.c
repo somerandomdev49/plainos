@@ -68,7 +68,7 @@ static void Adapter_DisplayChar_OnGet_(Adapter_DC *this,
         this->col,
         (int)ch
     };
-    
+
     switch((char)ch)
     {
     case '\n': this->x = 0; this->y++; break;
@@ -76,7 +76,7 @@ static void Adapter_DisplayChar_OnGet_(Adapter_DC *this,
     case '\v': this->y++; break;
     default:   this->x++; break;
     }
-    
+
     this->tgt->onget(this->tgt->this, (void*)this, &dc);
 }
 
@@ -113,7 +113,7 @@ static void Display_OnGet_(struct Display *this,
                      c->ch, /* TODO: UTF-8 Framebuffer_Char */
                      c->col);
 }
-                    
+
 
 /* Initializes a display */
 void Display_Initialize(struct Display *this,
@@ -143,13 +143,13 @@ static void InitDisplay()
         { "Font8x8 Basic", 8, 8 },
         &font8x8_basic
     };
-    
+
     /* initialize the framebuffer */
     Framebuffer_Intiailize(&gDisplay_Fb,
                            &ptr_fb,
                            ptr_bb.fb_width, ptr_bb.fb_height,
                            (struct Font*)&gDisplay_Font);
-    
+
     /* initialize the display | TODO: multiple displays */
     Display_Initialize(&gDisplay, &gDisplay_Fb);
 }
@@ -171,14 +171,14 @@ void _start()
 {
     InitDisplay();
     InitPipes();
-    
+
     /* this will render the Pipe as it gets updated */
     Provider_Subscribe(&GetGlobalPipe(0)->prov, &gDisplay.adp.sub);
-    
+
     Write(GetGlobalPipe(0), "Initializing Interrupts... ");
     Arch_InitInterrupts();
     Write(GetGlobalPipe(0), "Done!\n");
-    
+
     Write(GetGlobalPipe(0), "Doing:\n");
     Write(GetGlobalPipe(0), "  int $0\n");
     asm("int $0");

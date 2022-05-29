@@ -544,3 +544,4 @@ nedit.shell: /usr/bin/zsh
 nedit.smartTags: True
 nedit.prefFileRead: True
 nedit.titleFormat: {%c} [%s] %f (%S) - %d
+

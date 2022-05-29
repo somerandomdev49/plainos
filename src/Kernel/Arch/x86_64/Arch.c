@@ -10,15 +10,17 @@ static void InitGate(struct Arch_x86_64_IntDesc *g,
     g->off1 = ((uint64_t)isr >>  0) & 0x0000FFFF;
     g->off2 = ((uint64_t)isr >> 16) & 0x0000FFFF;
     g->off3 = ((uint64_t)isr >> 32) & 0xFFFFFFFF;
-    
+
     g->zero = 0;
     g->sel = 0x08;
-    
-    g->opts.ist = 0;
-    g->opts.res = 0;
-    g->opts.gate = 14; /* 0b1110 */
-    g->opts.dpl = ring;
-    g->opts.pres = 1;
+    g->attrs.ist = 0;
+    g->attrs.type = 0x8E; // Trap Gate
+
+    // g->opts.ist = 0;
+    // g->opts.res = 0;
+    // g->opts.gate = 14; /* 0b1110 */
+    // g->opts.dpl = ring;
+    // g->opts.pres = 1;
 }
 
 struct IntFrame
@@ -66,62 +68,23 @@ const char *Arch_x86_64_ExcNames[32] = {
 };
 
 #define ISRFunc(N) Arch_x86_64_ISR##N
-#define ExternISR(N) extern void ISRFunc(N) ();
 
-/*- extern ISR declarations, implemented in assembly -*/
-
-ExternISR(0);
-ExternISR(1);
-ExternISR(2);
-ExternISR(3);
-ExternISR(4);
-ExternISR(5);
-ExternISR(6);
-ExternISR(7);
-ExternISR(8);
-ExternISR(9);
-ExternISR(10);
-ExternISR(11);
-ExternISR(12);
-ExternISR(13);
-ExternISR(14);
-ExternISR(15);
-ExternISR(16);
-ExternISR(17);
-ExternISR(18);
-ExternISR(19);
-ExternISR(10);
-ExternISR(21);
-ExternISR(22);
-ExternISR(23);
-ExternISR(24);
-ExternISR(25);
-ExternISR(26);
-ExternISR(27);
-ExternISR(28);
-ExternISR(29);
-ExternISR(30);
-ExternISR(31);
-
-static void PageFault_Handler(uint64_t isr,
-                       struct Arch_x86_64_Regs *regs)
+static void PageFault_Handler(struct Arch_x86_64_Frame *frame)
 {
-    (void)isr; (void)regs;
     Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
                      "CPU issued a Page Fault");
 }
 
-static void GeneralProtFault_Handler(uint64_t isr,
-                                     struct Arch_x86_64_Regs *regs)
+static void GeneralProtFault_Handler(struct Arch_x86_64_Frame *frame)
 {
-    (void)isr; (void)regs;
     Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
                      "CPU issued a General Protection Fault");
 }
 
 void Arch_InitInterrupts()
 {
-#define INIT_GATE(N) InitGate(&gIDT[N], &ISRFunc(N), 0)
+#define INIT_GATE(N) extern void ISRFunc(N)(); \
+                     InitGate(&gIDT[N], &ISRFunc(N), 0)
     INIT_GATE(0);
     INIT_GATE(1);
     INIT_GATE(2);
@@ -154,12 +117,12 @@ void Arch_InitInterrupts()
     INIT_GATE(29);
     INIT_GATE(30);
     INIT_GATE(31);
-    
+
     Arch_x86_64_LoadIDT(gIDT, sizeof(gIDT));
-    
+
     Arch_x86_64_RegisterInterrupt(14, &PageFault_Handler);
     Arch_x86_64_RegisterInterrupt(13, &GeneralProtFault_Handler);
-    
+
     asm("sti");
 }
 
@@ -174,9 +137,11 @@ void Arch_x86_64_RegisterInterrupt(uint8_t n,
 
 #include <Plain/IO/Pipe.h>
 
-void Arch_x86_64_ISR_Handler(struct Arch_x86_64_Regs *regs)
+void Arch_x86_64_ISR_Handler(struct Arch_x86_64_Frame *frame)
 {
-    WriteLine(GetGlobalPipe(0), "ISR!");
-    uint64_t isr = *(uint64_t*)(regs + 1);
-    if(handlers[isr] != NULL) handlers[isr](isr, regs);
+    uint64_t isr = frame->no;
+    Write(GetGlobalPipe(0), "ISR ");
+    WriteUInt64(GetGlobalPipe(0), isr);
+    WriteLine(GetGlobalPipe(0), "...");
+    // if(handlers[isr] != NULL) handlers[isr](isr, regs);
 }

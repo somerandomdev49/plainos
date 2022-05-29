@@ -41,9 +41,33 @@ Arch_x86_64_LoadIDT:               /* rdi: pointer, si: size */
 .extern Arch_x86_64_ISR_Handler
 isr_common:                     /* common ISR handler */
     pushallq                    /* push all registers */
+
+    /* save CPU State */
+    mov %ds, %ax                 /* save ds into ax */
+    pushq %rax                   /* push rax (ax ^^) */
+
+    /* set the segdefs to kernel segment descriptor */
+    movw $0x10, %ax             /* using ax here because imm not allowed */
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
+    /* call the C handler */
+    cld                         /* SysV ABI req ig? */
     movq %rsp, %rdi             /* first C argument: pointer to struct */
     callq Arch_x86_64_ISR_Handler
+
+    /* restore CPU state */
+    popq %rax                   /* pop rax (CPU state) */
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
     popallq                     /* pop all saved registers */
+
+    addq $8, %rsp               /* pop pushed error code and ISR number */
     iretq                       /* return from ISR */
 
 
@@ -51,6 +75,7 @@ isr_common:                     /* common ISR handler */
 
 .macro isr_e i                  /* ISR with error code pushed by CPU */
 .global Arch_x86_64_ISR\i
+.align 4
 Arch_x86_64_ISR\i:
     pushq \i                    /* push ISR index */
     jmp isr_common              /* jump to common handler */
@@ -59,9 +84,10 @@ Arch_x86_64_ISR\i:
 
 .macro isr_n i                  /* ISR without error code pushed by CPU */
 .global Arch_x86_64_ISR\i
+.align 4
 Arch_x86_64_ISR\i:
     pushq 0                     /* push our own "error code" instead */
-    pushq \i                    /* push ISR index */
+    pushq \i                     /* push ISR index */
     jmp isr_common              /* jump to common handler */
 .endm
 

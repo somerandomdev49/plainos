@@ -1,18 +1,19 @@
 
 target = x86_64-pc-none-elf
 cflags = -Wall -Wno-unused-function -nostdlib -target $target $
-         -fpic -fno-stack-protector -mno-red-zone -mgeneral-regs-only
+         -fpic -fno-stack-protector -mno-red-zone -fdiagnostics-color
+# -mgeneral-regs-only
 aflags = -Wall -nostdlib -target $target
 
 rule cc
-    command = clang -c $in -o $out $cflags -MD -MF $out.d -fpic -fno-stack-protector -Iinclude -ffreestanding
+    command = clang -c $in -o $out $cflags -MD -MF $out.d -Iinclude -ffreestanding
     depfile = $out.d
 
 rule as
     command = clang -c $in -o $out $aflags
 
 rule ld
-    command = ld.lld $in -o $out -T linker.ld -nostdlib
+    command = ld.lld $in -o $out -T linker.ld -nostdlib --color-diagnostics
 
 rule sh
     command = $in
