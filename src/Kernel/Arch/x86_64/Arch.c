@@ -29,6 +29,41 @@ struct IntFrame
     uint64_t ss;
 };
 
+const char *Arch_x86_64_ExcNames[32] = {
+    "Divide By Zero",
+    "Debug",
+    "Non-Maskable Interrupt",
+    "Breakpoint",
+    "Overflow",
+    "Bound Range Exceeded",
+    "Invalid Opcode",
+    "Device Not Available",
+    "Double Float",
+    "-Coprocessor-Segment-Overrun-",
+    "Invalid TSS",
+    "Segment Not Present",
+    "Stack-Segment Fault",
+    "General Protection Fault",
+    "Page Fault",
+    "Reserved",
+    "x87 Floating-Point Exception",
+    "Alignment Check",
+    "Machine Check",
+    "SIMD Float Exception",
+    "Virtualization Exception",
+    "Control Protection Exception",
+    "Reserved", /* 22 */
+    "Reserved", /* 23 */
+    "Reserved", /* 24 */
+    "Reserved", /* 25 */
+    "Reserved", /* 26 */
+    "Reserved", /* 27 */
+    "Hypervisor Injection Exception",
+    "VMM Communication Exception",
+    "Security Exception",
+    "Reserved"
+};
+
 #define ISRFunc(N) Arch_x86_64_ISR##N
 #define ExternISR(N) extern void ISRFunc(N) ();
 
@@ -102,4 +137,19 @@ void Arch_InitInterrupts()
     INIT_GATE(29);
     INIT_GATE(30);
     INIT_GATE(31);
+}
+
+/* TODO: Implement the Provider/Subscriber thing here */
+typedef void (*Interrupt_Handler)(uint64_t isr, struct Arch_x86_64_Regs *regs);
+static Interrupt_Handler handlers[256] = {0};
+
+void Arch_RegisterInterrupt(uint8_t n, Interrupt_Handler f)
+{
+    handlers[n] = f;
+}
+
+void Arch_x86_64_ISR_Handler(struct Arch_x86_64_Regs *regs)
+{
+    uint64_t isr = *(uint64_t*)(regs + 1);
+    if(handlers[isr] != NULL) handlers[isr](isr, regs);
 }

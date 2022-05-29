@@ -2,7 +2,9 @@
 #define PLAIN_KERNEL_ARCH_X86_64_
 #include <Plain/Common.h>
 
-struct Arch_x86_64_IntDesc {
+/*- Loaded into the IDT -*/
+struct Arch_x86_64_IntDesc
+{
    uint16_t off1; /* offset bits 0..15 */
    uint16_t sel;  /* a code segment selector in GDT or LDT */
    struct {
@@ -18,10 +20,24 @@ struct Arch_x86_64_IntDesc {
    uint32_t zero; /* reserved */
 } _ATTRIBUTE(packed);
 
+/*- Registers -*/
+struct Arch_x86_64_Regs
+{
+    uint64_t rdi,
+             rsi,
+             rbp,
+             rdx,
+             rcx,
+             rbx,
+             rax;
+} _ATTRIBUTE(packed);
+
 /* loads an IDT at ptr, with size `size` */
 void Arch_x86_64_LoadIDT(struct Arch_x86_64_IntDesc *ptr,
                          uint16_t size);
 
+/* Exception Names */
 extern const char *Arch_x86_64_ExcNames[32];
+
 
 #endif
