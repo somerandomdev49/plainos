@@ -179,7 +179,10 @@ void _start()
     Arch_InitInterrupts();
     Write(GetGlobalPipe(0), "Done!\n");
     
+    Write(GetGlobalPipe(0), "Doing:\n");
+    Write(GetGlobalPipe(0), "  int $0\n");
     asm("int $0");
+    Write(GetGlobalPipe(0), "Done\n");
     
     Write(GetGlobalPipe(0), "Kernel Terminated\n");
     for(;;) asm("hlt");

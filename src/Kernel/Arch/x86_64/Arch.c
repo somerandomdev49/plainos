@@ -9,7 +9,7 @@ static void InitGate(struct Arch_x86_64_IntDesc *g,
 {
     g->off1 = ((uint64_t)isr >>  0) & 0x0000FFFF;
     g->off2 = ((uint64_t)isr >> 16) & 0x0000FFFF;
-    g->off3 = ((uint64_t)isr << 32) & 0xFFFFFFFF;
+    g->off3 = ((uint64_t)isr >> 32) & 0xFFFFFFFF;
     
     g->zero = 0;
     g->sel = 0x08;
@@ -172,8 +172,11 @@ void Arch_x86_64_RegisterInterrupt(uint8_t n,
     handlers[n] = f;
 }
 
+#include <Plain/IO/Pipe.h>
+
 void Arch_x86_64_ISR_Handler(struct Arch_x86_64_Regs *regs)
 {
+    WriteLine(GetGlobalPipe(0), "ISR!");
     uint64_t isr = *(uint64_t*)(regs + 1);
     if(handlers[isr] != NULL) handlers[isr](isr, regs);
 }
