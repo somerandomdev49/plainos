@@ -64,7 +64,7 @@ static void Adapter_DisplayChar_OnGet_(Adapter_DC *this,
                                        uintptr_t ch)
 {
     struct DisplayChar dc = {
-        this->x, this->y,
+        this->x + 1, this->y + 1,
         this->col,
         (int)ch
     };
@@ -86,8 +86,8 @@ void Adapter_DisplayChar_Initialize(Adapter_DC *this,
     this->sub.this = this;
     this->sub.onget = (Subscriber_OnGet)&Adapter_DisplayChar_OnGet_;
     this->tgt = target;
-    this->x = 1;
-    this->y = 1;
+    this->x = 0;
+    this->y = 0;
     this->col = 0xFFFFFF;
 }
 
@@ -108,8 +108,8 @@ static void Display_OnGet_(struct Display *this,
 {
     (void)provider;
     Framebuffer_Char(this->fb,
-                     c->x * this->fb->font->width,
-                     c->y * this->fb->font->height,
+                     c->x * (this->fb->font->width + 1),
+                     c->y * (this->fb->font->height + 1),
                      c->ch, /* TODO: UTF-8 Framebuffer_Char */
                      c->col);
 }
@@ -162,7 +162,7 @@ static void InitPipes()
 }
 
 /* Return a global pipe */
-static inline Pipe GetPipe(uint32_t global_id)
+Pipe GetGlobalPipe(uint32_t global_id)
 { return &gPipes[global_id]; }
 
 extern void Arch_InitInterrupts();
@@ -173,12 +173,15 @@ void _start()
     InitPipes();
     
     /* this will render the Pipe as it gets updated */
-    Provider_Subscribe(&GetPipe(0)->prov, &gDisplay.adp.sub);
+    Provider_Subscribe(&GetGlobalPipe(0)->prov, &gDisplay.adp.sub);
     
-    Write(GetPipe(0), "Initializing Interrupts... ");
+    Write(GetGlobalPipe(0), "Initializing Interrupts... ");
     Arch_InitInterrupts();
-    Write(GetPipe(0), "Done!");
-
+    Write(GetGlobalPipe(0), "Done!\n");
+    
+    asm("int $0");
+    
+    Write(GetGlobalPipe(0), "Kernel Terminated\n");
     for(;;) asm("hlt");
 }
 

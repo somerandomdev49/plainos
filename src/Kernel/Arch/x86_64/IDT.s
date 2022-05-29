@@ -14,7 +14,8 @@ Arch_x86_64_LoadIDT:               /* rdi: pointer, si: size */
 
 /*-[ Push/Pop ]-----------------------------------------------------------------*/
 
-.macro pushaq                   /* Push all 64-bit registers (no rXX for now) */
+/* Push all 64-bit registers (no rXX for now) */
+.macro pushallq
     push %rax
     push %rbx
     push %rcx
@@ -22,9 +23,10 @@ Arch_x86_64_LoadIDT:               /* rdi: pointer, si: size */
     push %rbp
     push %rsi
     push %rdi
-.endm                           /* pushaq */
+.endm
 
-.macro popaq                    /* Pop all 64-bit registers (no rXX for now) */
+/* Pop all 64-bit registers (no rXX for now) */
+.macro popallq
     pop %rdi
     pop %rsi
     pop %rbp
@@ -32,36 +34,36 @@ Arch_x86_64_LoadIDT:               /* rdi: pointer, si: size */
     pop %rcx
     pop %rbx
     pop %rax
-.endm                           /* popaq */
+.endm
 
 /*-[ Common ISR Code ]----------------------------------------------------------*/
 
 .extern Arch_x86_64_ISR_Handler
 isr_common:                     /* common ISR handler */
-    pushaq                      /* push all registers */
+    pushallq                    /* push all registers */
     movq %rsp, %rdi             /* first C argument: pointer to struct */
-    callq $Arch_x86_64_ISR_Handler
-    popaq                       /* pop all saved registers */
+    callq Arch_x86_64_ISR_Handler
+    popallq                     /* pop all saved registers */
     iretq                       /* return from ISR */
 
 
 /*-[ ISR Macros ]---------------------------------------------------------------*/
 
-.macro isr_e 1                  /* ISR with error code pushed by CPU */
-.global Arch_x86_64_ISR%i
-Arch_x86_64_ISR%i:
-    pushq %i                    /* push ISR index */
-    jmp $isr_common             /* jump to common handler */
-.endm                           /* isr_e */
+.macro isr_e i                  /* ISR with error code pushed by CPU */
+.global Arch_x86_64_ISR\i
+Arch_x86_64_ISR\i:
+    pushq \i                    /* push ISR index */
+    jmp isr_common              /* jump to common handler */
+.endm
 
 
-.macro isr_n 1                  /* ISR without error code pushed by CPU */
-.global Arch_x86_64_ISR%i
-Arch_x86_64_ISR%i:
+.macro isr_n i                  /* ISR without error code pushed by CPU */
+.global Arch_x86_64_ISR\i
+Arch_x86_64_ISR\i:
     pushq 0                     /* push our own "error code" instead */
-    pushq %i                    /* push ISR index */
-    jmp $isr_common             /* jump to common handler */
-.endm                           /* isr_n */
+    pushq \i                    /* push ISR index */
+    jmp isr_common              /* jump to common handler */
+.endm
 
 /*-[ ISRs ]---------------------------------------------------------------------*/
 
@@ -85,7 +87,7 @@ isr_n 16
 isr_e 17
 isr_n 18
 isr_n 19
-isr_n 10
+isr_n 20
 isr_e 21
 isr_n 22
 isr_n 23

@@ -40,4 +40,13 @@ void Arch_x86_64_LoadIDT(struct Arch_x86_64_IntDesc *ptr,
 extern const char *Arch_x86_64_ExcNames[32];
 
 
+typedef /*- Function called when an ISR is ran -*/
+void (*Arch_x86_64_Interrupt_Handler)(uint64_t isr,
+                                      struct Arch_x86_64_Regs *regs);
+
+
+/* Register an interrupt function */
+void Arch_x86_64_RegisterInterrupt(uint8_t n,
+                                   Arch_x86_64_Interrupt_Handler f);
+
 #endif

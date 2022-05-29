@@ -1,5 +1,6 @@
 #include <Plain/Common.h>
 #include <Plain/Kernel/Arch/x86_64/Arch.h>
+#include <Plain/Kernel/Exception.h>
 
 static struct Arch_x86_64_IntDesc gIDT[256] _ATTRIBUTE(aligned);
 
@@ -102,6 +103,22 @@ ExternISR(29);
 ExternISR(30);
 ExternISR(31);
 
+static void PageFault_Handler(uint64_t isr,
+                       struct Arch_x86_64_Regs *regs)
+{
+    (void)isr; (void)regs;
+    Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
+                     "CPU issued a Page Fault");
+}
+
+static void GeneralProtFault_Handler(uint64_t isr,
+                                     struct Arch_x86_64_Regs *regs)
+{
+    (void)isr; (void)regs;
+    Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
+                     "CPU issued a General Protection Fault");
+}
+
 void Arch_InitInterrupts()
 {
 #define INIT_GATE(N) InitGate(&gIDT[N], &ISRFunc(N), 0)
@@ -137,13 +154,20 @@ void Arch_InitInterrupts()
     INIT_GATE(29);
     INIT_GATE(30);
     INIT_GATE(31);
+    
+    Arch_x86_64_LoadIDT(gIDT, sizeof(gIDT));
+    
+    Arch_x86_64_RegisterInterrupt(14, &PageFault_Handler);
+    Arch_x86_64_RegisterInterrupt(13, &GeneralProtFault_Handler);
+    
+    asm("sti");
 }
 
 /* TODO: Implement the Provider/Subscriber thing here */
-typedef void (*Interrupt_Handler)(uint64_t isr, struct Arch_x86_64_Regs *regs);
-static Interrupt_Handler handlers[256] = {0};
+static Arch_x86_64_Interrupt_Handler handlers[256] = {0};
 
-void Arch_RegisterInterrupt(uint8_t n, Interrupt_Handler f)
+void Arch_x86_64_RegisterInterrupt(uint8_t n,
+                                   Arch_x86_64_Interrupt_Handler f)
 {
     handlers[n] = f;
 }
