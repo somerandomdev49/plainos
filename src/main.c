@@ -2,6 +2,7 @@
 #include <Plain/IO/Pipe.h>
 #include <Plain/Kernel/Display/FBuf.h>
 #include <Plain/Kernel/Display/Display.h>
+#include <Plain/Kernel/Arch/Arch.h>
 #include <bootboot.h>
 
 /*-[ Plain/Common.h ]-----------------------------------------------------------*/
@@ -61,11 +62,10 @@ void InitDisplay()
     Provider_Subscribe(&GetTTY(0)->prov, &gDisplay.adp.sub);
 }
 
-extern void Arch_InitInterrupts();
-extern void Arch_InitMemory();
-
 void _start()
 {
+    Arch_DisableInterrupts();
+
     InitPipes();
     InitDisplay();
     Pipe p = GetTTY(0);
@@ -78,10 +78,15 @@ void _start()
     Arch_InitInterrupts();
     PutStr(p, "Done!\n");
     
+    Arch_Interrupt(0);
+    Arch_Interrupt(1);
+    Arch_Interrupt(2);
+    Arch_Interrupt(3);
+    
     PutStr(p, "\033c2Kernel Terminated\033c0\n");
     
-    asm volatile("cli");
-    for(;;) asm("hlt");
+    Arch_DisableInterrupts();
+    Arch_Halt();
 }
 
 

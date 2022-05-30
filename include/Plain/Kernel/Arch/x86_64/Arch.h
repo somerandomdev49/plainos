@@ -40,6 +40,20 @@ struct GDT_Entry
 
 _Static_assert(sizeof(struct GDT_Entry) == 8, "");
 
+struct GDT_Entry64
+{
+    uint16_t lim0;   /* limit 0..15 */
+    uint16_t base0;  /* base 0..15 */
+    uint8_t base1;   /* base 16..23 */
+    uint8_t type;    /* type */
+    uint8_t lim1_fl; /* limit 16..19 + flags */
+    uint8_t base2;   /* base 24..31 */
+    uint32_t base3;  /* base 32..64 */
+    uint32_t res;    /* reserved */
+} _ATTRIBUTE(packed);
+
+_Static_assert(sizeof(struct GDT_Entry64) == 16, "");
+
 struct TSS
 {
     uint32_t res0; /* reserved */
@@ -82,8 +96,12 @@ struct StackFrame
     uint64_t rip, cs, rfl, rsp, ss;
 };
 
-/* loads an IDT at ptr, with size `size` */
+/* loads an GDT at ptr, with size `size` */
 void Arch_x86_64_LoadIDT(struct IDT_Entry *ptr,
+                         uint16_t size);
+
+/* loads an IDT at ptr, with size `size` */
+void Arch_x86_64_LoadGDT(struct GDT_Entry *ptr,
                          uint16_t size);
 
 #endif
