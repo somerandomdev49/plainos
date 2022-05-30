@@ -13,14 +13,14 @@ void Kernel_Exception(enum Kernel_Exception ex,
                       const char *reason)
 {
     Pipe p = GetTTY(0);
-    Write(p, "\n\033c1Exception: \033c0");
-    Write(p, Kernel_ExceptionName[ex]);
+    PutStr(p, "\n\033c1Exception: \033c0");
+    PutStr(p, Kernel_ExceptionName[ex]);
     if(reason != NULL)
     {
-        Write(p, "\n   Reason: \033c2");
-        Write(p, reason);
+        PutStr(p, "\n   Reason: \033c2");
+        PutStr(p, reason);
     }
-    Write(p, "\033c0\n\n");
+    PutStr(p, "\033c0\n\n");
     
     // for(;;) asm("hlt");
 }

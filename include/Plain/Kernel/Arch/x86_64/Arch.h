@@ -3,7 +3,7 @@
 #include <Plain/Common.h>
 
 /*- Loaded into the IDT -*/
-struct Arch_x86_64_IntDesc
+struct IDT_Entry
 {
    uint16_t off1; /* offset bits 0..15 */
    uint16_t sel;  /* a code segment selector in GDT or LDT */
@@ -26,10 +26,10 @@ struct Arch_x86_64_IntDesc
    uint32_t zero; /* reserved */
 } _ATTRIBUTE(packed);
 
-_Static_assert(sizeof(struct Arch_x86_64_IntDesc) == 16, "");
+_Static_assert(sizeof(struct IDT_Entry) == 16, "");
 
 /*- Registers -*/
-struct Arch_x86_64_Frame
+struct StackFrame
 {
     uint64_t r15,
              r14,
@@ -51,19 +51,7 @@ struct Arch_x86_64_Frame
 };
 
 /* loads an IDT at ptr, with size `size` */
-void Arch_x86_64_LoadIDT(struct Arch_x86_64_IntDesc *ptr,
+void Arch_x86_64_LoadIDT(struct IDT_Entry *ptr,
                          uint16_t size);
-
-/* Exception Names */
-extern const char *Arch_x86_64_ExcNames[32];
-
-
-typedef /*- Function called when an ISR is ran -*/
-void (*Arch_x86_64_Interrupt_Handler)(struct Arch_x86_64_Frame *frame);
-
-
-/* Register an interrupt function */
-void Arch_x86_64_RegisterInterrupt(uint8_t n,
-                                   Arch_x86_64_Interrupt_Handler f);
 
 #endif

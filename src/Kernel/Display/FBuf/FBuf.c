@@ -1,4 +1,4 @@
-#include <Plain/Kernel/FBuf.h>
+#include <Plain/Kernel/Display/FBuf.h>
 /*#include <Plain/Kernel/Font/PSF.h>
 #include <Plain/Kernel/Font/BM.h>*/
 
