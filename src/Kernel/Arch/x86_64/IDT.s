@@ -56,19 +56,17 @@ Arch_x86_64_LoadIDT:                /* rdi: pointer, si: size */
 
 .extern Arch_x86_64_ISR_Handler
 isr_common:                     /* common ISR handler */
-    /*cld                         /* SysV ABI req ig? */
-    /* pushallq                 /* push all registers */
+    pushallq                    /* push all registers */
 
+    cld                         /* SysV ABI req ig? */
+    
     /* call the C handler */
     movq %rsp, %rdi             /* first C argument: pointer to struct */
     callq Arch_x86_64_ISR_Handler
 
-.L0:hlt
-    jmp .L0
+    popallq                     /* pop all saved registers */
 
-    /* popallq                  /* pop all saved registers */
-
-    addq $16, %rsp              /* pop pushed error code and ISR number */
+    addq $8, %rsp              /* pop pushed error code and ISR number */
     iretq                       /* return from ISR */
 
 
@@ -78,7 +76,7 @@ isr_common:                     /* common ISR handler */
 .global Arch_x86_64_ISR\i
 .align 4
 Arch_x86_64_ISR\i:
-    /*pushq \i                    /* push ISR index */
+    pushq $\i                   /* push ISR index */
     jmp isr_common              /* jump to common handler */
 .endm
 
@@ -87,8 +85,8 @@ Arch_x86_64_ISR\i:
 .global Arch_x86_64_ISR\i
 .align 4
 Arch_x86_64_ISR\i:
-    pushq 0                     /* push our own "error code" instead */
-    /*pushq \i                    /* push ISR index */
+    pushq $0                    /* push our own "error code" instead */
+    pushq $\i                   /* push ISR index */
     jmp isr_common              /* jump to common handler */
 .endm
 

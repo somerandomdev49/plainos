@@ -30,8 +30,24 @@ static inline void WriteUInt64_B10(Pipe to, uint64_t v)
     if(v >= 10) WriteUInt64_B10(to, v / 10);
     WriteChar(to, '0' + (v % 10));
 }
+
+static inline void WriteUInt64_B16L(Pipe to, uint64_t v)
+{
+    char a[17] = { '0','0','0','0',
+                   '0','0','0','0',
+                   '0','0','0','0',
+                   '0','0','0','0', '\0' };
+    if(v == 0) Write(to, a);
+    else
+    {
+        a[clz(v) / 4] = '\0';
+        Write(to, a);
+        WriteUInt64_B16(to, v);
+    }
+}
+
 static inline void WriteUInt64(Pipe to, uint64_t v)
-{ Write(to, "0x"); WriteUInt64_B16(to, v); }
+{ WriteUInt64_B16(to, v); }
 
 Pipe GetGlobalPipe(uint32_t global_id);
 Pipe GetLocalPipe(uint32_t local_id);

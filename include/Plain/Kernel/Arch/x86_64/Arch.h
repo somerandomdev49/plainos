@@ -31,23 +31,23 @@ _Static_assert(sizeof(struct Arch_x86_64_IntDesc) == 16, "");
 /*- Registers -*/
 struct Arch_x86_64_Frame
 {
-    // uint64_t r15,
-    //          r14,
-    //          r13,
-    //          r12,
-    //          r11,
-    //          r10,
-    //          r9,
-    //          r8,
-    //          rdi,
-    //          rsi,
-    //          rbp,
-    //          rdx,
-    //          rcx,
-    //          rbx,
-    //          rax;
-    uint64_t err;
-    uint64_t rip, cs, rfl, rsp;
+    uint64_t r15,
+             r14,
+             r13,
+             r12,
+             r11,
+             r10,
+             r9,
+             r8,
+             rdi,
+             rsi,
+             rbp,
+             rdx,
+             rcx,
+             rbx,
+             rax;
+    uint64_t no, err;
+    uint64_t rip, cs, rfl, rsp, ss;
 };
 
 /* loads an IDT at ptr, with size `size` */

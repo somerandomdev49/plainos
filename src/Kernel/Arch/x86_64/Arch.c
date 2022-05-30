@@ -73,6 +73,16 @@ static void GeneralProtFault_Handler(struct Arch_x86_64_Frame *frame)
                      "CPU issued a General Protection Fault");
 }
 
+static void DivByZero_Handler(struct Arch_x86_64_Frame *frame)
+{
+    Kernel_Exception(EXCEPTION_DIVIDE_BY_ZERO, NULL);
+}
+
+static void Generic_Handler(struct Arch_x86_64_Frame *frame)
+{
+    Kernel_Exception(EXCEPTION_UNKNOWN, Arch_x86_64_ExcNames[frame->no]);
+}
+
 void Arch_InitInterrupts()
 {
 #define INIT_GATE(N) extern void ISRFunc(N)(); \
@@ -112,9 +122,11 @@ void Arch_InitInterrupts()
 
     Arch_x86_64_LoadIDT(gIDT, (uint16_t)sizeof(gIDT));
 
+    Arch_x86_64_RegisterInterrupt(00, &DivByZero_Handler);
     Arch_x86_64_RegisterInterrupt(14, &PageFault_Handler);
     Arch_x86_64_RegisterInterrupt(13, &GeneralProtFault_Handler);
-
+    outb(0x21, 0xFF);
+    
     asm("sti");
 }
 
@@ -131,29 +143,43 @@ void Arch_x86_64_RegisterInterrupt(uint8_t n,
 
 void WriteFrame(Pipe p, struct Arch_x86_64_Frame *frame)
 {
-    // Write(p, "  RDI = "); WriteUInt64(p, frame->rdi);    WriteChar(p, '\n');
-    // Write(p, "  RSI = "); WriteUInt64(p, frame->rsi);    WriteChar(p, '\n');
-    // Write(p, "  RBP = "); WriteUInt64(p, frame->rbp);    WriteChar(p, '\n');
-    // Write(p, "  RDX = "); WriteUInt64(p, frame->rdx);    WriteChar(p, '\n');
-    // Write(p, "  RCX = "); WriteUInt64(p, frame->rcx);    WriteChar(p, '\n');
-    // Write(p, "  RBX = "); WriteUInt64(p, frame->rbx);    WriteChar(p, '\n');
-    // Write(p, "  RAX = "); WriteUInt64(p, frame->rax);    WriteChar(p, '\n');
-    // Write(p, "  TEST= "); WriteUInt64(p, frame->test);   WriteChar(p, '\n');
-    Write(p, "  ERR = "); WriteUInt64(p, frame->err);    WriteChar(p, '\n');
-    // Write(p, "  NO  = "); WriteUInt64(p, frame->no );    WriteChar(p, '\n');
-    Write(p, "  RIP = "); WriteUInt64(p, frame->rip);    WriteChar(p, '\n');
-    Write(p, "  CS  = "); WriteUInt64(p, frame->cs );    WriteChar(p, '\n');
-    Write(p, "  RFL = "); WriteUInt64(p, frame->rfl); WriteChar(p, '\n');
-    Write(p, "  RSP = "); WriteUInt64(p, frame->rsp);    WriteChar(p, '\n');
+#define W WriteUInt64_B16L
+    Write(p, "RDI = "); W(p, frame->rdi); Write(p, "\t");
+    Write(p, "RSI = "); W(p, frame->rsi); Write(p, "\t");
+    Write(p, "RBP = "); W(p, frame->rbp); Write(p, "\n");
+
+    Write(p, "RDX = "); W(p, frame->rdx); Write(p, "\t");
+    Write(p, "R8  = "); W(p, frame->rdi); Write(p, "\t");
+    Write(p, "R9  = "); W(p, frame->rsi); Write(p, "\n");
+    
+    Write(p, "R10 = "); W(p, frame->rbp); Write(p, "\t");
+    Write(p, "R11 = "); W(p, frame->rdx); Write(p, "\t");
+    Write(p, "R12 = "); W(p, frame->rdi); Write(p, "\n");
+    
+    Write(p, "R13 = "); W(p, frame->rsi); Write(p, "\t");
+    Write(p, "R14 = "); W(p, frame->rbp); Write(p, "\t");
+    Write(p, "R15 = "); W(p, frame->rdx); Write(p, "\n");
+
+    Write(p, "RCX = "); W(p, frame->rcx); Write(p, "\t");
+    Write(p, "RBX = "); W(p, frame->rbx); Write(p, "\t");
+    Write(p, "RAX = "); W(p, frame->rax); Write(p, "\n");
+    
+    Write(p, "ERR = "); W(p, frame->err); Write(p, "\t");
+    Write(p, "NO  = "); W(p, frame->no ); Write(p, "\t");
+    Write(p, "RIP = "); W(p, frame->rip); Write(p, "\n");
+    
+    Write(p, "CS  = "); W(p, frame->cs ); Write(p, "\t");
+    Write(p, "RFL = "); W(p, frame->rfl); Write(p, "\t");
+    Write(p, "RSP = "); W(p, frame->rsp); Write(p, "\n");
+    Write(p, "SS  = "); W(p, frame->ss ); Write(p, "\n");
 }
 
 void Arch_x86_64_ISR_Handler(struct Arch_x86_64_Frame *frame)
 {
     // uint64_t isr = frame->no;
-    Pipe p = GetGlobalPipe(0);
+    Pipe p = GetGlobalPipe(1);
     WriteLine(p, "Interrupt, Frame:");
     WriteFrame(p, frame);
-
-    /* if(handlers[isr] != NULL) handlers[isr](isr, regs); */
-    /* TODO */
+    if(handlers[frame->no] != NULL) handlers[frame->no](frame);
+    else Generic_Handler(frame);
 }

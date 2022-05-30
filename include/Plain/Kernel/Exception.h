@@ -6,6 +6,7 @@ enum Kernel_Exception
 {
     EXCEPTION_MEMORY_ACCESS,
     EXCEPTION_DIVIDE_BY_ZERO,
+    EXCEPTION_UNKNOWN,
     EXCEPTION_MAX_
 };
 

@@ -52,8 +52,15 @@ struct Adapter_DisplayChar
 {
     struct Subscriber sub;
     struct Subscriber *tgt;
-    uint32_t x, y;
-    uint32_t col;
+    uint32_t x, y;  /* cursor position */
+    uint32_t col;   /* color */
+    int e;          /* is in 'escape mode' */
+    struct          /* escape mode data */
+    {
+        char mode;      /* mode */
+        uint32_t *pal;  /* palette */
+        size_t pal_max; /* palette max*/
+    } ed;
 };
 
 typedef struct Adapter_DisplayChar Adapter_DC;
@@ -63,6 +70,25 @@ static void Adapter_DisplayChar_OnGet_(Adapter_DC *this,
                                        void *provider,
                                        uintptr_t ch)
 {
+    if(this->e && !this->ed.mode)
+    {
+        this->ed.mode = ch;
+        return;
+    }
+    
+    if(this->e && this->ed.mode == 'c')
+    {
+        if(ch - '0' < this->ed.pal_max)
+            this->col = this->ed.pal[ch - '0'];
+        this->ed.mode = 0;
+    }
+    
+    if(this->ed.mode != 0 || this->e)
+    {
+        if(this->ed.mode == 0) this->e = 0; /* exit esc mode */
+        return;
+    }
+
     struct DisplayChar dc = {
         this->x + 1, this->y + 1,
         this->col,
@@ -71,6 +97,7 @@ static void Adapter_DisplayChar_OnGet_(Adapter_DC *this,
 
     switch((char)ch)
     {
+    case '\033': this->e = 1; return; /* Don't print the symbol */
     case '\n': this->x = 0; this->y++; break;
     case '\r': this->x = 0; break;
     case '\v': this->y++; break;
@@ -80,6 +107,13 @@ static void Adapter_DisplayChar_OnGet_(Adapter_DC *this,
     this->tgt->onget(this->tgt->this, (void*)this, &dc);
 }
 
+static uint32_t Adapter_DC_PALETTE0[] = {
+    0xEFEFEF,
+    0xDC143C,
+    0x8FBC8F,
+    0x1E90FF,
+};
+
 void Adapter_DisplayChar_Initialize(Adapter_DC *this,
                                     struct Subscriber *target)
 {
@@ -88,7 +122,11 @@ void Adapter_DisplayChar_Initialize(Adapter_DC *this,
     this->tgt = target;
     this->x = 0;
     this->y = 0;
-    this->col = 0xFFFFFF;
+    this->col = 0xEFEFEF;
+    this->e = 0;
+    this->ed.mode = 0;
+    this->ed.pal = Adapter_DC_PALETTE0;
+    this->ed.pal_max = sizeof(Adapter_DC_PALETTE0) / sizeof(uint32_t);
 }
 
 /*- Interface between a framebuffer and
@@ -180,7 +218,7 @@ void _start()
     Write(GetGlobalPipe(0), "Done!\n");
 
     Write(GetGlobalPipe(0), "Doing:\n");
-    Write(GetGlobalPipe(0), "  int $0\n");
+    Write(GetGlobalPipe(0), "  int $13\n");
     asm("int $0");
     Write(GetGlobalPipe(0), "Done\n");
     
