@@ -1,4 +1,4 @@
-#include <Plain/Kernel/Display/FBuf.h>
+#include <Plain/IO/FBuf/FBuf.h>
 /*#include <Plain/Kernel/Font/PSF.h>
 #include <Plain/Kernel/Font/BM.h>*/
 
@@ -75,7 +75,7 @@ void Framebuffer_Text(struct Framebuffer *this,
                          y + py * (this->font->height + 1),
                          *string,
                          color);
-            
+
         switch(*string++)
         {
             case '\n': px = 0; ++y; break;

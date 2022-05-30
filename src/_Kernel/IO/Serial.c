@@ -1,4 +1,5 @@
-#include <Plain/Kernel/Serial.h>
+#include <Plain/_Kernel/IO/Serial.h>
+#include <Plain/_Kernel/Common.h>
 
 #define COM1 0x3f8
 #define PORT COM1
@@ -7,7 +8,7 @@ struct Subscriber gSerial = {0};
 
 void OnGet_(void *serial, void *provider, uintptr_t data)
 {
-    if(data < ' ' && data != '\n' && data != '\r' && data != '\t') return;
+    // if(data < ' ' && data != '\n' && data != '\r' && data != '\t') return;
     Serial_Write(data);
 }
 

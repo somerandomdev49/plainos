@@ -106,4 +106,7 @@ void Arch_x86_64_LoadIDT(struct IDT_Entry *ptr,
 void Arch_x86_64_LoadGDT(struct GDT_Entry *ptr,
                          uint16_t size);
 
+void Arch_x86_64_EnableSyscallExt();
+void Arch_x86_64_Sysret(uint64_t addr, uint64_t stack);
+
 #endif

@@ -1,10 +1,10 @@
 #include <Plain/Common.h>
 #include <Plain/IO/Pipe.h>
-#include <Plain/Kernel/Display/FBuf.h>
-#include <Plain/Kernel/Display/Display.h>
-#include <Plain/Kernel/Arch/Arch.h>
-#include <Plain/Kernel/Serial.h>
-#include <bootboot.h>
+#include <Plain/IO/FBuf/FBuf.h>
+#include <Plain/IO/TTY/TTY.h>
+#include <Plain/_Kernel/IO/Serial.h>
+#include <Plain/_Kernel/Arch/Common.h>
+#include <bootboot/bootboot.h>
 
 /*-[ Plain/Common.h ]-----------------------------------------------------------*/
 
@@ -31,12 +31,13 @@ static void InitPipes()
 }
 
 /* Return a global pipe */
-Pipe GetTTY(uint32_t id)
+Pipe GetPipe(uint32_t id)
 { return &gPipes[id]; }
 
-static struct Framebuffer gDisplay_Fb;
-static struct BM_Font gDisplay_Font;
-static struct Display gDisplay;
+static struct Framebuffer *gDisplay_Fb;
+static struct BM_Font gBasicFont;
+
+static struct Framebuffer gFBs[8];
 
 /* Initializes system display */
 void InitDisplay()
@@ -46,25 +47,22 @@ void InitDisplay()
 
     /* load basic font */
     extern char font8x8_basic[128][8];
-    gDisplay_Font = (struct BM_Font){
+    gBasicFont = (struct BM_Font){
         { "Font8x8 Basic", 8, 8 },
         &font8x8_basic
     };
 
     /* initialize the framebuffer */
-    Framebuffer_Intiailize(&gDisplay_Fb,
+    Framebuffer_Intiailize(gDisplay_Fb,
                            &ptr_fb,
                            ptr_bb.fb_width, ptr_bb.fb_height,
-                           (struct Font*)&gDisplay_Font);
+                           &gBasicFont.super);
 
-    /* initialize the display | TODO: multiple displays */
-    Display_Initialize(&gDisplay, &gDisplay_Fb);
 }
 
-static void ConnectTTYs()
+static void InitDynLinker()
 {
-    Provider_Subscribe(&GetTTY(1)->prov, &gSerial);
-    Provider_Subscribe(&GetTTY(0)->prov, &gDisplay.adp.sub);
+
 }
 
 void _start()
@@ -73,29 +71,50 @@ void _start()
     Arch_InitSerial();
 
     InitPipes();
+    Provider_Subscribe(&GetPipe(0)->prov, &gSerial);
+
     InitDisplay();
-    ConnectTTYs();
 
-    Pipe p = GetTTY(0);
-    PutStr(p, "Initializing Memory... ");
+    Pipe p = GetPipe(0);
+    PutStr(p, "Initializing Memory...\n");
     Arch_InitMemory();
-    PutStr(p, "\033c2Done!\n\033c0");
+    PutStr(p, "\033[0;32mDone!\n\033[m");
 
-    PutStr(p, "Initializing Interrupts... ");
+    PutStr(p, "Initializing Interrupts...\n");
     Arch_InitInterrupts();
-    PutStr(p, "\033c2Done!\n\033c0");
+    PutStr(p, "\033[0;32mDone!\n\033[m");
 
-    Arch_Interrupt(0);
-    Arch_Interrupt(1);
-    Arch_Interrupt(2);
-    Arch_Interrupt(3);
+    // PutStr(p, "Testing interrupts... (0, 1, 2, 3)\n");
+    // Arch_Interrupt(0);
+    // Arch_Interrupt(1);
+    // Arch_Interrupt(2);
+    // Arch_Interrupt(3);
+    // PutStr(p, "Done\n");
 
-    PutStr(p, "\033c2Kernel Terminated\033c0\n");
+    PutStr(p, "Initializing Userland...\n");
+    PutStr(p, "- \033[0;34mSyscalls...\033[m\n");
+    Arch_InitSyscalls();
+    PutStr(p, "\033[0;32m  Done!\n\033[m");
+    PutStr(p, "- \033[0;34mDynamic Linker...\033[m\n");
+    InitDynLinker();
+    PutStr(p, "\033[0;32m  Done!\n\033[m");
+    PutStr(p, "\033[0;32mDone!\n\033[m");
+
+    PutStr(p, "\033[0;33mJumping to userland...\033[m\n");
+    extern void TestUserlandFunction();
+    Arch_GotoUserland(&TestUserlandFunction);
+
+    PutStr(p, "\033[0;33mKernel Terminated\033[m\n");
 
     Arch_DisableInterrupts();
     Arch_Halt();
 }
 
+void TestUserlandFunction()
+{
+    asm("wrmsr");
+    for(;;);
+}
 
 
 

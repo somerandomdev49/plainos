@@ -14,6 +14,7 @@ extern const char *Kernel_ExceptionName[EXCEPTION_MAX_];
 
 /* Generate an exception */
 void Kernel_Exception(enum Kernel_Exception ex,
-                      const char *reason);
+                      const char *reason,
+                      uint64_t addr);
 
 #endif

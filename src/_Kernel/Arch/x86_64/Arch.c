@@ -1,5 +1,5 @@
-#include <Plain/Common.h>
-#include <Plain/Kernel/Arch/x86_64/Arch.h>
+#include <Plain/_Kernel/Common.h>
+#include <Plain/_Kernel/Arch/x86_64/Arch.h>
 
 struct GDT_Table {
   struct GDT_Entry null;      /* 0x00 */
@@ -48,7 +48,7 @@ static void GDT_Entry64_Initialize(struct GDT_Entry64 *this,
 
 static void SetupGDT()
 {
-    Pipe p = GetTTY(1);
+    Pipe p = GetPipe(0);
     PutStr(p, "Setting up the GDT\n");
     BufferFillZeros(&gTSS, sizeof(gTSS));
     GDT_Entry64_Initialize(&gGDT_Table.tss,

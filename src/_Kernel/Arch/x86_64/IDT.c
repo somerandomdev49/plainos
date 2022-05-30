@@ -1,6 +1,6 @@
-#include <Plain/Common.h>
-#include <Plain/Kernel/Arch/x86_64/Arch.h>
-#include <Plain/Kernel/Exception.h>
+#include <Plain/_Kernel/Common.h>
+#include <Plain/_Kernel/Arch/x86_64/Arch.h>
+#include <Plain/_Kernel/Exception.h>
 
 static struct IDT_Entry gIDT[256] _ATTRIBUTE(aligned);
 
@@ -58,23 +58,25 @@ const char *ExcNames[32] = {
 static void PageFault_Handler(struct StackFrame *frame)
 {
     Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
-                     "CPU issued a Page Fault");
+                     "CPU issued a Page Fault",
+                     frame->rip);
 }
 
 static void GeneralProtFault_Handler(struct StackFrame *frame)
 {
     Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
-                     "CPU issued a General Protection Fault");
+                     "CPU issued a General Protection Fault",
+                     frame->rip);
 }
 
 static void DivByZero_Handler(struct StackFrame *frame)
 {
-    Kernel_Exception(EXCEPTION_DIVIDE_BY_ZERO, NULL);
+    Kernel_Exception(EXCEPTION_DIVIDE_BY_ZERO, NULL, frame->rip);
 }
 
 static void Generic_Handler(struct StackFrame *frame)
 {
-    Kernel_Exception(EXCEPTION_UNKNOWN, ExcNames[frame->no]);
+    Kernel_Exception(EXCEPTION_UNKNOWN, ExcNames[frame->no], frame->rip);
 }
 
 typedef /*- Function called when an ISR is ran -*/
@@ -151,8 +153,8 @@ void Arch_InitInterrupts()
 static void WriteFrame(Pipe p, struct StackFrame *frame)
 {
 #define W PutU64_16L
-#define C "\033c3"
-#define Z "\033c0"
+#define C "\033[0;33m"
+#define Z "\033[m"
     PutStr(p, "RDI = "C); W(p, frame->rdi); PutStr(p, "\t"Z);
     PutStr(p, "RSI = "C); W(p, frame->rsi); PutStr(p, "\t"Z);
     PutStr(p, "RBP = "C); W(p, frame->rbp); PutStr(p, "\n"Z);
@@ -185,7 +187,7 @@ static void WriteFrame(Pipe p, struct StackFrame *frame)
 
 void Arch_x86_64_ISR_Handler(struct StackFrame *frame)
 {
-    Pipe p = GetTTY(1);
+    Pipe p = GetPipe(0);
     PutStr(p, "Interrupt #");
     PutU64_10(p, frame->no);
     PutStr(p, ", Frame:\n");

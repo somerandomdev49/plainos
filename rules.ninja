@@ -1,4 +1,5 @@
 
+debug  = -g
 target = x86_64-pc-none-elf
 cflags = -Wall -Wno-unused-function -nostdlib -target $target $
          -fpic -fno-stack-protector -mno-red-zone -fdiagnostics-color
@@ -6,14 +7,14 @@ cflags = -Wall -Wno-unused-function -nostdlib -target $target $
 aflags = -Wall -nostdlib -target $target
 
 rule cc
-    command = clang -c $in -o $out $cflags -MD -MF $out.d -Iinclude -ffreestanding -g
+    command = clang -c $in -o $out $cflags -MD -MF $out.d -Iinclude -ffreestanding $debug
     depfile = $out.d
 
 rule as
-    command = clang -c $in -o $out $aflags -g
+    command = clang -c $in -o $out $aflags $debug
 
 rule ld
-    command = ld.lld $in -o $out -T linker.ld -nostdlib --color-diagnostics -g
+    command = ld.lld $in -o $out -T linker.ld -nostdlib --color-diagnostics $debug
 
 rule mkbootimg
     command = mkbootimg $in $out

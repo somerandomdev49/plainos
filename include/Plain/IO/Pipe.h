@@ -2,7 +2,7 @@
 #define PLAIN_PIPE_
 #include <Plain/Common.h>
 
-/*- Provider and subscriver of any text data -*/
+/*- provider and subscriber of any data -*/
 struct Pipe
 {
     struct Provider prov;
@@ -26,7 +26,6 @@ void PutU64_16L(Pipe to, uint64_t v);
 static inline void PutU64(Pipe to, uint64_t v)
 { PutU64_16L(to, v); }
 
-Pipe GetTTY(uint32_t id);
 Pipe GetPipe(uint32_t local_id);
 
 #endif
