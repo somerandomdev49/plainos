@@ -2,12 +2,12 @@
 #include <Plain/Kernel/Arch/x86_64/Arch.h>
 
 struct GDT_Table {
-  struct GDT_Entry null;
-  struct GDT_Entry kern_code;
-  struct GDT_Entry kern_data;
-  struct GDT_Entry user_code;
-  struct GDT_Entry user_data;
-  struct GDT_Entry64 tss;
+  struct GDT_Entry null;      /* 0x00 */
+  struct GDT_Entry kern_code; /* 0x08 */
+  struct GDT_Entry kern_data; /* 0x10 */
+  struct GDT_Entry user_code; /* 0x18 */
+  struct GDT_Entry user_data; /* 0x20 */
+  struct GDT_Entry64 tss;     /* 0x28 */
 } _ATTRIBUTE(packed);
 
 _ATTRIBUTE(aligned(4096))
@@ -25,36 +25,59 @@ static void GDT_Entry_Initialize(struct GDT_Entry *this,
                                  uint32_t base, uint32_t lim,
                                  uint8_t acs, uint8_t flags)
 {
-
+    this->lim0    = lim >> 00;
+    this->lim1_fl = ((lim >> 16) & 0xF) | (flags << 4);
+    
+    this->base0 = (base >> 00) & 0xFF;
+    this->base1 = (base >> 16) & 0xFF;
+    this->base2 = (base << 24) & 0xFF;
+    
+    this->type = acs;
 }
 
 static void GDT_Entry64_Initialize(struct GDT_Entry64 *this,
-                                   uint64_t base, uint64_t lim,
+                                   uint64_t base, uint32_t lim,
                                    uint8_t acs, uint8_t flags)
 {
-
+    GDT_Entry_Initialize((struct GDT_Entry*)this, base, lim, acs, flags);
+    this->base3 = base >> 32;
+    this->res = 0;
 }
+
+#include <Plain/IO/Pipe.h>
 
 static void SetupGDT()
 {
+    Pipe p = GetTTY(0);
+    PutStr(p, "Setting up the GDT\n");
     BufferFillZeros(&gTSS, sizeof(gTSS));
+    GDT_Entry64_Initialize(&gGDT_Table.tss,
+                           (uint64_t)&gTSS,
+                           sizeof(gTSS),
+                           0x89, 0x0);
 #define X 0xFFFFF
 
+    PutStr(p, "* \ec3NULL\ec0 Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.null, 0, 0, 0, 0);
+    PutStr(p, "* \ec3Kernel Code\ec0 Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.kern_code, 0, X, 0x9A, 0xA);
+    PutStr(p, "* \ec3Kernel Data\ec0 Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.kern_data, 0, X, 0x92, 0xC);
+    PutStr(p, "* \ec3User Code\ec0 Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.user_code, 0, X, 0xFA, 0xA);
+    PutStr(p, "* \ec3User Data\ec0 Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.user_data, 0, X, 0xF2, 0xC);
-    GDT_Entry64_Initialize(&gGDT_Table.tss, 0, X, 0x89, 0x0);
-    
 #undef X
     
+    PutStr(p, "Loading the GDT...\n");
     Arch_x86_64_LoadGDT(&gGDT_Table.null, sizeof(gGDT_Table));
+    // Arch_x86_64_ReloadSegments();
 }
 
 void Arch_InitMemory()
 {
-
+    SetupGDT();
+    /* Paging already done by BOOTBOOT? */
 }
 
 void Arch_DisableInterrupts() { asm volatile("cli"); }

@@ -70,13 +70,13 @@ void _start()
     InitDisplay();
     Pipe p = GetTTY(0);
     
-    PutStr(p, "Initializing Memory... ");
+    PutStr(p, "Initializing Memory...\n");
     Arch_InitMemory();
-    PutStr(p, "Done!\n");
+    PutStr(p, "\033c2Done!\n\033c0");
     
-    PutStr(p, "Initializing Interrupts... ");
+    PutStr(p, "Initializing Interrupts...\n");
     Arch_InitInterrupts();
-    PutStr(p, "Done!\n");
+    PutStr(p, "\033c2Done!\n\033c0");
     
     Arch_Interrupt(0);
     Arch_Interrupt(1);

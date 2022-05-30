@@ -96,6 +96,8 @@ struct StackFrame
     uint64_t rip, cs, rfl, rsp, ss;
 };
 
+void Arch_x86_64_ReloadSegments();
+
 /* loads an GDT at ptr, with size `size` */
 void Arch_x86_64_LoadIDT(struct IDT_Entry *ptr,
                          uint16_t size);
