@@ -28,6 +28,38 @@ struct IDT_Entry
 
 _Static_assert(sizeof(struct IDT_Entry) == 16, "");
 
+struct GDT_Entry
+{
+    uint16_t lim0;   /* limit 0..15 */
+    uint16_t base0;  /* base 0..15 */
+    uint8_t base1;   /* base 16..23 */
+    uint8_t type;    /* type */
+    uint8_t lim1_fl; /* limit 16..19 + flags */
+    uint8_t base2;   /* base 24..31 */
+} _ATTRIBUTE(packed);
+
+_Static_assert(sizeof(struct GDT_Entry) == 8, "");
+
+struct TSS
+{
+    uint32_t res0; /* reserved */
+    uint64_t rsp0, /* stack pointer for ring 3|2|1 -> 0 (NB: not checked) */
+             rsp1, /* stack pointer for ring 3|2 -> 1 */ 
+             rsp2; /* stack pointer for ring 3 -> 2 */
+    uint64_t res1; /* reserved */
+    uint64_t ist2, /* Interrupt Stack Table, not used */
+             ist3, /* not used */
+             ist4, /* not used */
+             ist5, /* not used */
+             ist6, /* not used */
+             ist7; /* not used */
+    uint64_t res2; /* reserved */
+    uint16_t res3; /* reserved */
+    uint16_t iopb; /* IO Map Base Address Field (IO perm bit map, not used) */
+} _ATTRIBUTE(packed); 
+
+_Static_assert(sizeof(struct TSS) == 96, "");
+
 /*- Registers -*/
 struct StackFrame
 {
