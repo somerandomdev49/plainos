@@ -10,22 +10,23 @@ static void Adapter_DisplayChar_OnGet_(Adapter_DC *this,
                                        void *provider,
                                        uintptr_t ch)
 {
-    if(this->e && !this->ed.mode)
+    if(this->e)
     {
-        this->ed.mode = ch;
-        return;
-    }
-    
-    if(this->e && this->ed.mode == 'c')
-    {
-        if(ch - '0' < this->ed.pal_max)
-            this->col = this->ed.pal[ch - '0'];
-        this->ed.mode = 0;
-    }
-    
-    if(this->ed.mode != 0 || this->e)
-    {
-        if(this->ed.mode == 0) this->e = 0; /* exit esc mode */
+        if(!this->ed.mode)
+        {
+            this->ed.mode = ch;
+            return;
+        }
+        else if(this->ed.mode == '[')
+        {
+            if(ch - '0' < this->ed.pal_max)
+                this->col = this->ed.pal[ch - '0'];
+            this->ed.mode = 0;
+        }
+        else if(this->ed.mode != 0)
+        {
+            if(this->ed.mode == 0) this->e = 0; /* exit esc mode */
+        }
         return;
     }
 

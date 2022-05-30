@@ -2,10 +2,18 @@
 #define PLAIN_KERNEL_DISPLAY_INC_
 #include <Plain/Common.h>
 
-/*- Represents a single character to
-    be displayed on screen -*/
-struct DisplayChar
+enum DisplayCmdType
 {
+    DISPLAY_CMD_DRAW,
+    DISPLAY_CMD_CLEAR,
+    DISPLAY_CMD_CLEAR,
+};
+
+/*- Represents a command that is
+    intepreted by the display driver -*/
+struct DisplayCmd
+{
+
     uint32_t x, y; /* position */
     uint32_t col;  /* foreground color */
     int ch;        /* UTF-8 character */
@@ -43,5 +51,5 @@ struct Display
 /* Initializes a display */
 void Display_Initialize(struct Display *this,
                         struct Framebuffer *fbuf);
-						
+
 #endif

@@ -3,6 +3,7 @@
 #include <Plain/Kernel/Display/FBuf.h>
 #include <Plain/Kernel/Display/Display.h>
 #include <Plain/Kernel/Arch/Arch.h>
+#include <Plain/Kernel/Serial.h>
 #include <bootboot.h>
 
 /*-[ Plain/Common.h ]-----------------------------------------------------------*/
@@ -58,33 +59,39 @@ void InitDisplay()
 
     /* initialize the display | TODO: multiple displays */
     Display_Initialize(&gDisplay, &gDisplay_Fb);
-    
+}
+
+static void ConnectTTYs()
+{
+    Provider_Subscribe(&GetTTY(1)->prov, &gSerial);
     Provider_Subscribe(&GetTTY(0)->prov, &gDisplay.adp.sub);
 }
 
 void _start()
 {
     Arch_DisableInterrupts();
+    Arch_InitSerial();
 
     InitPipes();
     InitDisplay();
+    ConnectTTYs();
+
     Pipe p = GetTTY(0);
-    
-    PutStr(p, "Initializing Memory...\n");
+    PutStr(p, "Initializing Memory... ");
     Arch_InitMemory();
     PutStr(p, "\033c2Done!\n\033c0");
-    
-    PutStr(p, "Initializing Interrupts...\n");
+
+    PutStr(p, "Initializing Interrupts... ");
     Arch_InitInterrupts();
     PutStr(p, "\033c2Done!\n\033c0");
-    
+
     Arch_Interrupt(0);
     Arch_Interrupt(1);
     Arch_Interrupt(2);
     Arch_Interrupt(3);
-    
+
     PutStr(p, "\033c2Kernel Terminated\033c0\n");
-    
+
     Arch_DisableInterrupts();
     Arch_Halt();
 }
@@ -120,7 +127,7 @@ void Main()
     unsigned long length = GetRealPath(/* path = */ path, /* buffer = */ NULL);
     char buffer[length];
     GetRealPath(/* path = */ path, /* buffer = */ buffer);
-    
+
     struct DirectoryInfo info;
     DirectoryInfo_Init(&info, /* path = */ buffer);
     const char **children = DirectoryInfo_GetChildren(&info);

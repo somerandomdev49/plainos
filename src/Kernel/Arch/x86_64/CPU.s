@@ -6,7 +6,7 @@ outb:               /* di - port, si - value */
     outb %al, %dx   /* output byte */
     ret
 
-.global intb
+.global inb
 inb:                /* di - port */
     mov %di, %dx    /* inb only allows dx */
     inb %dx, %al    /* input byte */

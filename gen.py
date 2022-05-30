@@ -5,15 +5,6 @@ src = {
     'as': glob.glob('src/**/*.s', recursive=True)
 }
 
-with open('build.ninja', 'w') as out:
-    for file in src['cc']:
-        out.write(f'build build/{file}.o: cc {file}\n')
-
-    for file in src['as']:
-        out.write(f'build build/{file}.o: as {file}\n')
-
-
-
 with open('build.ninja', 'w') as fout:
     fout.write('# generated automatically, edit gen.py instead\n')
     fout.write('include rules.ninja')

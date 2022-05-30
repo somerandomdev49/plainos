@@ -10,6 +10,9 @@ Arch_x86_64_LoadGDT:                /* rdi: pointer, si: size */
     movw %si, (gdtr.size)           /* put the size */
     movq %rdi, (gdtr.offset)        /* put the offset */
     lgdtq (gdtr)                    /* load the GDT */
+    ret
+
+#if 0
     movw 0x28, %ax                  /* TSS segment is 0x28 */
     ltr %ax                         /* load TSS */
     movw $0x10, %ax                 /* push data segment into registers */
@@ -25,10 +28,11 @@ Arch_x86_64_LoadGDT:                /* rdi: pointer, si: size */
     lretq                           /* do a far ret, like a normal ret but
                                        pop an extra argument of the stack
                                        and load it into cs */
+#endif
 
 .global Arch_x86_64_ReloadSegments
 Arch_x86_64_ReloadSegments:
-    pushw $0x08                     /* push code segment selector */
+    pushq $0x08                     /* push code segment selector */
     leaq .reload_CS(%rip), %rax     /* load address of reload_CS -> rax */
     pushq %rax                      /* push ^ */
     lretq                           /* far return */

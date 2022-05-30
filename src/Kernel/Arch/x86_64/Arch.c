@@ -27,11 +27,11 @@ static void GDT_Entry_Initialize(struct GDT_Entry *this,
 {
     this->lim0    = lim >> 00;
     this->lim1_fl = ((lim >> 16) & 0xF) | (flags << 4);
-    
+
     this->base0 = (base >> 00) & 0xFF;
     this->base1 = (base >> 16) & 0xFF;
     this->base2 = (base << 24) & 0xFF;
-    
+
     this->type = acs;
 }
 
@@ -48,7 +48,7 @@ static void GDT_Entry64_Initialize(struct GDT_Entry64 *this,
 
 static void SetupGDT()
 {
-    Pipe p = GetTTY(0);
+    Pipe p = GetTTY(1);
     PutStr(p, "Setting up the GDT\n");
     BufferFillZeros(&gTSS, sizeof(gTSS));
     GDT_Entry64_Initialize(&gGDT_Table.tss,
@@ -57,21 +57,24 @@ static void SetupGDT()
                            0x89, 0x0);
 #define X 0xFFFFF
 
-    PutStr(p, "* \ec3NULL\ec0 Segment\n");
+    PutStr(p, "* NULL Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.null, 0, 0, 0, 0);
-    PutStr(p, "* \ec3Kernel Code\ec0 Segment\n");
+    PutStr(p, "* Kernel Code Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.kern_code, 0, X, 0x9A, 0xA);
-    PutStr(p, "* \ec3Kernel Data\ec0 Segment\n");
+    PutStr(p, "* Kernel Data Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.kern_data, 0, X, 0x92, 0xC);
-    PutStr(p, "* \ec3User Code\ec0 Segment\n");
+    PutStr(p, "* User Code Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.user_code, 0, X, 0xFA, 0xA);
-    PutStr(p, "* \ec3User Data\ec0 Segment\n");
+    PutStr(p, "* User Data Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.user_data, 0, X, 0xF2, 0xC);
 #undef X
-    
+
     PutStr(p, "Loading the GDT...\n");
     Arch_x86_64_LoadGDT(&gGDT_Table.null, sizeof(gGDT_Table));
-    // Arch_x86_64_ReloadSegments();
+    PutStr(p, "Done!\n");
+    PutStr(p, "Reloading Segment Registers!\n");
+    Arch_x86_64_ReloadSegments();
+    PutStr(p, "Done!\n");
 }
 
 void Arch_InitMemory()
@@ -107,4 +110,3 @@ asm(".pushsection .text\n\t"
      "lea (%rax,%rdi,4), %rax\n\t"          /* Add table base to offset = jmp address */
      "jmp *%rax\n\t"                        /* Do sepcified interrupt */
      ".popsection");
-
