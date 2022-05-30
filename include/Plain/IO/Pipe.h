@@ -49,7 +49,7 @@ static inline void WriteUInt64_B16L(Pipe to, uint64_t v)
 static inline void WriteUInt64(Pipe to, uint64_t v)
 { WriteUInt64_B16(to, v); }
 
-Pipe GetGlobalPipe(uint32_t global_id);
+Pipe GetTTY(uint32_t id);
 Pipe GetLocalPipe(uint32_t local_id);
 
 #endif

@@ -12,14 +12,15 @@ const char *Kernel_ExceptionName[EXCEPTION_MAX_] =
 void Kernel_Exception(enum Kernel_Exception ex,
                       const char *reason)
 {
-    Write(GetGlobalPipe(0), "\n\033c1Exception: \033c0");
-    Write(GetGlobalPipe(0), Kernel_ExceptionName[ex]);
+    Pipe p = GetTTY(0);
+    Write(p, "\n\033c1Exception: \033c0");
+    Write(p, Kernel_ExceptionName[ex]);
     if(reason != NULL)
     {
-        Write(GetGlobalPipe(0), "\n   Reason: \033c2");
-        Write(GetGlobalPipe(0), reason);
+        Write(p, "\n   Reason: \033c2");
+        Write(p, reason);
     }
-    Write(GetGlobalPipe(0), "\033c0\n\n");
+    Write(p, "\033c0\n\n");
     
-    for(;;) asm("hlt");
+    // for(;;) asm("hlt");
 }

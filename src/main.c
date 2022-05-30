@@ -200,8 +200,8 @@ static void InitPipes()
 }
 
 /* Return a global pipe */
-Pipe GetGlobalPipe(uint32_t global_id)
-{ return &gPipes[global_id]; }
+Pipe GetTTY(uint32_t id)
+{ return &gPipes[id]; }
 
 extern void Arch_InitInterrupts();
 
@@ -211,18 +211,19 @@ void _start()
     InitPipes();
 
     /* this will render the Pipe as it gets updated */
-    Provider_Subscribe(&GetGlobalPipe(0)->prov, &gDisplay.adp.sub);
+    Provider_Subscribe(&GetTTY(0)->prov, &gDisplay.adp.sub);
 
-    Write(GetGlobalPipe(0), "Initializing Interrupts... ");
+    Write(GetTTY(0), "Initializing Interrupts... ");
     Arch_InitInterrupts();
-    Write(GetGlobalPipe(0), "Done!\n");
-
-    Write(GetGlobalPipe(0), "Doing:\n");
-    Write(GetGlobalPipe(0), "  int $13\n");
-    asm("int $0");
-    Write(GetGlobalPipe(0), "Done\n");
+    Write(GetTTY(0), "Done!\n");
     
-    Write(GetGlobalPipe(0), "Kernel Terminated\n");
+    Write(GetTTY(0), "Initializing Memory... ");
+    Arch_InitMemory();
+    Write(GetTTY(0), "Done!\n");
+    
+    Write(GetTTY(0), "Kernel Terminated\n");
+    
+    asm volatile("cli");
     for(;;) asm("hlt");
 }
 
@@ -263,7 +264,7 @@ void Main()
     const char **children = DirectoryInfo_GetChildren(&info);
 
     for(unsigned int i = 0; childen[i]; ++i)
-        WriteFormat(GetLocalPipe(/* id = */ 0), "%s\n", children[i]);
+        WriteFormat(GetPipe(/* id = */ 0), "%s\n", children[i]);
 }
 
 // Example:

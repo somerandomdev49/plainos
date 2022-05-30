@@ -125,7 +125,18 @@ void Arch_InitInterrupts()
     Arch_x86_64_RegisterInterrupt(00, &DivByZero_Handler);
     Arch_x86_64_RegisterInterrupt(14, &PageFault_Handler);
     Arch_x86_64_RegisterInterrupt(13, &GeneralProtFault_Handler);
-    outb(0x21, 0xFF);
+    
+    /* remap the PIC */
+    outb(0x20, 0x11);
+    outb(0xA0, 0x11);
+    outb(0x21, 0x20);
+    outb(0xA1, 0x28);
+    outb(0x21, 0x04);
+    outb(0xA1, 0x02);
+    outb(0x21, 0x01);
+    outb(0xA1, 0x01);
+    outb(0x21, 0x0);
+    outb(0xA1, 0x0);
     
     asm("sti");
 }
@@ -144,42 +155,52 @@ void Arch_x86_64_RegisterInterrupt(uint8_t n,
 void WriteFrame(Pipe p, struct Arch_x86_64_Frame *frame)
 {
 #define W WriteUInt64_B16L
-    Write(p, "RDI = "); W(p, frame->rdi); Write(p, "\t");
-    Write(p, "RSI = "); W(p, frame->rsi); Write(p, "\t");
-    Write(p, "RBP = "); W(p, frame->rbp); Write(p, "\n");
+#define C "\033c3"
+#define Z "\033c0"
+    Write(p, "RDI = "C); W(p, frame->rdi); Write(p, "\t"Z);
+    Write(p, "RSI = "C); W(p, frame->rsi); Write(p, "\t"Z);
+    Write(p, "RBP = "C); W(p, frame->rbp); Write(p, "\n"Z);
 
-    Write(p, "RDX = "); W(p, frame->rdx); Write(p, "\t");
-    Write(p, "R8  = "); W(p, frame->rdi); Write(p, "\t");
-    Write(p, "R9  = "); W(p, frame->rsi); Write(p, "\n");
+    Write(p, "RDX = "C); W(p, frame->rdx); Write(p, "\t"Z);
+    Write(p, "R8  = "C); W(p, frame->rdi); Write(p, "\t"Z);
+    Write(p, "R9  = "C); W(p, frame->rsi); Write(p, "\n"Z);
     
-    Write(p, "R10 = "); W(p, frame->rbp); Write(p, "\t");
-    Write(p, "R11 = "); W(p, frame->rdx); Write(p, "\t");
-    Write(p, "R12 = "); W(p, frame->rdi); Write(p, "\n");
+    Write(p, "R10 = "C); W(p, frame->rbp); Write(p, "\t"Z);
+    Write(p, "R11 = "C); W(p, frame->rdx); Write(p, "\t"Z);
+    Write(p, "R12 = "C); W(p, frame->rdi); Write(p, "\n"Z);
     
-    Write(p, "R13 = "); W(p, frame->rsi); Write(p, "\t");
-    Write(p, "R14 = "); W(p, frame->rbp); Write(p, "\t");
-    Write(p, "R15 = "); W(p, frame->rdx); Write(p, "\n");
+    Write(p, "R13 = "C); W(p, frame->rsi); Write(p, "\t"Z);
+    Write(p, "R14 = "C); W(p, frame->rbp); Write(p, "\t"Z);
+    Write(p, "R15 = "C); W(p, frame->rdx); Write(p, "\n"Z);
 
-    Write(p, "RCX = "); W(p, frame->rcx); Write(p, "\t");
-    Write(p, "RBX = "); W(p, frame->rbx); Write(p, "\t");
-    Write(p, "RAX = "); W(p, frame->rax); Write(p, "\n");
+    Write(p, "RCX = "C); W(p, frame->rcx); Write(p, "\t"Z);
+    Write(p, "RBX = "C); W(p, frame->rbx); Write(p, "\t"Z);
+    Write(p, "RAX = "C); W(p, frame->rax); Write(p, "\n"Z);
     
-    Write(p, "ERR = "); W(p, frame->err); Write(p, "\t");
-    Write(p, "NO  = "); W(p, frame->no ); Write(p, "\t");
-    Write(p, "RIP = "); W(p, frame->rip); Write(p, "\n");
+    Write(p, "ERR = "C); W(p, frame->err); Write(p, "\t"Z);
+    Write(p, "NO  = "C); W(p, frame->no ); Write(p, "\t"Z);
+    Write(p, "RIP = "C); W(p, frame->rip); Write(p, "\n"Z);
     
-    Write(p, "CS  = "); W(p, frame->cs ); Write(p, "\t");
-    Write(p, "RFL = "); W(p, frame->rfl); Write(p, "\t");
-    Write(p, "RSP = "); W(p, frame->rsp); Write(p, "\n");
-    Write(p, "SS  = "); W(p, frame->ss ); Write(p, "\n");
+    Write(p, "CS  = "C); W(p, frame->cs ); Write(p, "\t"Z);
+    Write(p, "RFL = "C); W(p, frame->rfl); Write(p, "\t"Z);
+    Write(p, "RSP = "C); W(p, frame->rsp); Write(p, "\n"Z);
+    Write(p, "SS  = "C); W(p, frame->ss ); Write(p, "\n"Z);
 }
 
 void Arch_x86_64_ISR_Handler(struct Arch_x86_64_Frame *frame)
 {
-    // uint64_t isr = frame->no;
-    Pipe p = GetGlobalPipe(1);
-    WriteLine(p, "Interrupt, Frame:");
+    Pipe p = GetTTY(1);
+    Write(p, "Interrupt #");
+    WriteUInt64_B10(p, frame->no);
+    Write(p, ", Frame:\n");
     WriteFrame(p, frame);
     if(handlers[frame->no] != NULL) handlers[frame->no](frame);
     else Generic_Handler(frame);
 }
+
+void Arch_InitMemory()
+{
+
+}
+
+

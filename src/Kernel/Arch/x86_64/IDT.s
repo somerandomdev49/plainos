@@ -21,8 +21,8 @@ Arch_x86_64_LoadIDT:                /* rdi: pointer, si: size */
     push %rcx
     push %rdx
     push %rbp
-    push %rsi
     push %rdi
+    push %rsi
     push %r8
     push %r9
     push %r10
@@ -35,16 +35,16 @@ Arch_x86_64_LoadIDT:                /* rdi: pointer, si: size */
 
 /* Pop all 64-bit registers (no rXX for now) */
 .macro popallq
-    push %r15
-    push %r14
-    push %r13
-    push %r12
-    push %r11
-    push %r10
-    push %r9
-    push %r8
-    pop %rdi
+    pop %r15
+    pop %r14
+    pop %r13
+    pop %r12
+    pop %r11
+    pop %r10
+    pop %r9
+    pop %r8
     pop %rsi
+    pop %rdi
     pop %rbp
     pop %rdx
     pop %rcx
@@ -57,16 +57,20 @@ Arch_x86_64_LoadIDT:                /* rdi: pointer, si: size */
 .extern Arch_x86_64_ISR_Handler
 isr_common:                     /* common ISR handler */
     pushallq                    /* push all registers */
-
-    cld                         /* SysV ABI req ig? */
     
     /* call the C handler */
     movq %rsp, %rdi             /* first C argument: pointer to struct */
+    
+    movq %rsp, %rbx             /* save the stack pointer (see SysV ABI) */
+    andq $~15, %rsp             /* align the stack per SysV ABI */
+    
     callq Arch_x86_64_ISR_Handler
+    
+    mov %rbx, %rsp              /* restore old stack pointer */
 
     popallq                     /* pop all saved registers */
-
-    addq $8, %rsp              /* pop pushed error code and ISR number */
+    
+    addq $16, %rsp              /* pop pushed error code and ISR number */
     iretq                       /* return from ISR */
 
 
