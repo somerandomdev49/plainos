@@ -2,18 +2,21 @@
 #include <Plain/_Kernel/Arch/x86_64/Arch.h>
 
 struct GDT_Table {
-  struct GDT_Entry null;      /* 0x00 */
-  struct GDT_Entry kern_code; /* 0x08 */
-  struct GDT_Entry kern_data; /* 0x10 */
-  struct GDT_Entry user_code; /* 0x18 */
-  struct GDT_Entry user_data; /* 0x20 */
-  struct GDT_Entry64 tss;     /* 0x28 */
-} _ATTRIBUTE(packed);
+    struct GDT_Entry null;  /* 0x00 */
+    struct GDT_Entry kcode; /* 0x08 */
+    struct GDT_Entry kdata; /* 0x10 */
+    struct GDT_Entry unull; /* 0x18 */
+    struct GDT_Entry udata; /* 0x20 */
+    struct GDT_Entry ucode; /* 0x28 */
+    struct GDT_Entry64 tss; /* 0x30 */
+} __attribute__((packed));
 
-_ATTRIBUTE(aligned(4096))
+_Static_assert(sizeof(struct GDT_Table) == 0x40, "");
+
+__attribute__((aligned(4096)))
 struct GDT_Table gGDT_Table;
 
-_ATTRIBUTE(aligned)
+__attribute__((aligned))
 struct TSS gTSS;
 
 static void BufferFillZeros(void *s, size_t n) {
@@ -30,7 +33,7 @@ static void GDT_Entry_Initialize(struct GDT_Entry *this,
 
     this->base0 = (base >> 00) & 0xFF;
     this->base1 = (base >> 16) & 0xFF;
-    this->base2 = (base << 24) & 0xFF;
+    this->base2 = (base >> 24) & 0xFF;
 
     this->type = acs;
 }
@@ -39,7 +42,7 @@ static void GDT_Entry64_Initialize(struct GDT_Entry64 *this,
                                    uint64_t base, uint32_t lim,
                                    uint8_t acs, uint8_t flags)
 {
-    GDT_Entry_Initialize((struct GDT_Entry*)this, base, lim, acs, flags);
+    GDT_Entry_Initialize(&this->e, base, lim, acs, flags);
     this->base3 = base >> 32;
     this->res = 0;
 }
@@ -50,23 +53,26 @@ static void SetupGDT()
 {
     Pipe p = GetPipe(0);
     PutStr(p, "Setting up the GDT\n");
+
     BufferFillZeros(&gTSS, sizeof(gTSS));
-    GDT_Entry64_Initialize(&gGDT_Table.tss,
-                           (uint64_t)&gTSS,
-                           sizeof(gTSS),
-                           0x89, 0x0);
-#define X 0xFFFFF
+    gTSS.rsp0 = 0x0000000000000000; /* stack */
+    gTSS.iopb = sizeof(gTSS);
 
     PutStr(p, "* NULL Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.null, 0, 0, 0, 0);
     PutStr(p, "* Kernel Code Segment\n");
-    GDT_Entry_Initialize(&gGDT_Table.kern_code, 0, X, 0x9A, 0xA);
+    GDT_Entry_Initialize(&gGDT_Table.kcode, 0, 0xFFFFF, 0x9A, 0xA);
     PutStr(p, "* Kernel Data Segment\n");
-    GDT_Entry_Initialize(&gGDT_Table.kern_data, 0, X, 0x92, 0xC);
+    GDT_Entry_Initialize(&gGDT_Table.kdata, 0, 0xFFFFF, 0x92, 0xC);
     PutStr(p, "* User Code Segment\n");
-    GDT_Entry_Initialize(&gGDT_Table.user_code, 0, X, 0xFA, 0xA);
+    GDT_Entry_Initialize(&gGDT_Table.ucode, 0, 0xFFFFF, 0xFA, 0xA);
     PutStr(p, "* User Data Segment\n");
-    GDT_Entry_Initialize(&gGDT_Table.user_data, 0, X, 0xF2, 0xC);
+    GDT_Entry_Initialize(&gGDT_Table.udata, 0, 0xFFFFF, 0xF2, 0xC);
+    PutStr(p, "* TSS Segment\n");
+    GDT_Entry64_Initialize(&gGDT_Table.tss,
+                           (uint64_t)&gTSS,
+                           sizeof(gTSS) - 1,
+                           0x89, 0x0);
 #undef X
 
     PutStr(p, "Loading the GDT...\n");
@@ -74,6 +80,9 @@ static void SetupGDT()
     PutStr(p, "Done!\n");
     PutStr(p, "Reloading Segment Registers!\n");
     Arch_x86_64_ReloadSegments();
+    PutStr(p, "Done!\n");
+    PutStr(p, "Loading TSS!\n");
+    Arch_x86_64_LoadTSS(0x30);
     PutStr(p, "Done!\n");
 }
 
@@ -89,24 +98,24 @@ void Arch_Halt() { for(;;) asm volatile("hlt"); }
 
 /* https://forum.osdev.org/viewtopic.php?p=315435#p315435 Thanks! */
 /* void Arch_Interrupt(uint8_t i) */
-asm(".pushsection .text\n\t"
-
-     /* Generate the table of interrupt calls */
-     ".align 4\n"
-     "int_jmp_table:\n\t"
-     "intno=0\n\t"
-     ".rept 256\n\t"
-         "\tint $intno\n\t"
-         "\tret\n\t"
-         "\t.align 4\n\t"
-         "\tintno=intno+1\n\t"
-     ".endr\n\t"
-
-     /* generate_interrupt function */
-     ".global Arch_Interrupt\n"             /* Give this function global visibility */
-     "Arch_Interrupt:\n\t"
-     "movzx %dil, %edi\n\t"                 /* Zero extend int_no (in DIL) across RDI */
-     "lea int_jmp_table(%rip), %rax\n\t"    /* Get base of interrupt jmp table */
-     "lea (%rax,%rdi,4), %rax\n\t"          /* Add table base to offset = jmp address */
-     "jmp *%rax\n\t"                        /* Do sepcified interrupt */
-     ".popsection");
+// asm(".pushsection .text\n\t"
+//
+//      /* Generate the table of interrupt calls */
+//      ".align 4\n"
+//      "int_jmp_table:\n\t"
+//      "intno=0\n\t"
+//      ".rept 256\n\t"
+//          "\tint $intno\n\t"
+//          "\tret\n\t"
+//          "\t.align 4\n\t"
+//          "\tintno=intno+1\n\t"
+//      ".endr\n\t"
+//
+//      /* generate_interrupt function */
+//      ".global Arch_Interrupt\n"             /* Give this function global visibility */
+//      "Arch_Interrupt:\n\t"
+//      "movzx %dil, %edi\n\t"                 /* Zero extend int_no (in DIL) across RDI */
+//      "lea int_jmp_table(%rip), %rax\n\t"    /* Get base of interrupt jmp table */
+//      "lea (%rax,%rdi,4), %rax\n\t"          /* Add table base to offset = jmp address */
+//      "jmp *%rax\n\t"                        /* Do sepcified interrupt */
+//      ".popsection");

@@ -59,24 +59,26 @@ static void PageFault_Handler(struct StackFrame *frame)
 {
     Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
                      "CPU issued a Page Fault",
-                     frame->rip);
+                     frame->rip,
+                     frame->err);
 }
 
 static void GeneralProtFault_Handler(struct StackFrame *frame)
 {
     Kernel_Exception(EXCEPTION_MEMORY_ACCESS,
                      "CPU issued a General Protection Fault",
-                     frame->rip);
+                     frame->rip,
+                     frame->err);
 }
 
 static void DivByZero_Handler(struct StackFrame *frame)
 {
-    Kernel_Exception(EXCEPTION_DIVIDE_BY_ZERO, NULL, frame->rip);
+    Kernel_Exception(EXCEPTION_DIVIDE_BY_ZERO, NULL, frame->rip, frame->err);
 }
 
 static void Generic_Handler(struct StackFrame *frame)
 {
-    Kernel_Exception(EXCEPTION_UNKNOWN, ExcNames[frame->no], frame->rip);
+    Kernel_Exception(EXCEPTION_UNKNOWN, ExcNames[frame->no], frame->rip, frame->err);
 }
 
 typedef /*- Function called when an ISR is ran -*/

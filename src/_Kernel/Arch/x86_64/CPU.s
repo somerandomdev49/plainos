@@ -14,13 +14,13 @@ inb:                /* di - port */
 
 .global Arch_x86_64_EnableSyscallExt
 Arch_x86_64_EnableSyscallExt:
-    movq $0xc0000080, %rcx      /* EFER MSR */
+    movq $0xC0000080, %rcx      /* EFER MSR */
     rdmsr                       /* read current EFER */
     orl $1, %eax                /* enable SCE bit */
     wrmsr                       /* write back new EFER */
-    mov $0xc0000081, %rcx       /* STAR MSR */
+    mov $0xC0000081, %rcx       /* STAR MSR */
     rdmsr                       /* read current STAR */
-    mov $0x00180008, %edx       /* load up GDT segment bases 0x0 (kernel) and 0x18 (user) */
+    mov $0x00180008, %edx       /* load up GDT segment bases 0x0 and 0x18 */
     wrmsr                       /* write back new STAR */
     ret                         /* return back to C */
 

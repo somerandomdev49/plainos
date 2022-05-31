@@ -34,29 +34,29 @@ static void InitPipes()
 Pipe GetPipe(uint32_t id)
 { return &gPipes[id]; }
 
-static struct Framebuffer *gDisplay_Fb;
-static struct BM_Font gBasicFont;
-
-static struct Framebuffer gFBs[8];
+// static struct Framebuffer *gDisplay_Fb;
+// static struct BM_Font gBasicFont;
+//
+// static struct Framebuffer gFBs[8];
 
 /* Initializes system display */
 void InitDisplay()
 {
-    extern BOOTBOOT ptr_bb;
-    extern uint32_t ptr_fb;
-
-    /* load basic font */
-    extern char font8x8_basic[128][8];
-    gBasicFont = (struct BM_Font){
-        { "Font8x8 Basic", 8, 8 },
-        &font8x8_basic
-    };
-
-    /* initialize the framebuffer */
-    Framebuffer_Intiailize(gDisplay_Fb,
-                           &ptr_fb,
-                           ptr_bb.fb_width, ptr_bb.fb_height,
-                           &gBasicFont.super);
+    // extern BOOTBOOT ptr_bb;
+    // extern uint32_t ptr_fb;
+    //
+    // /* load basic font */
+    // extern char font8x8_basic[128][8];
+    // gBasicFont = (struct BM_Font){
+    //     { "Font8x8 Basic", 8, 8 },
+    //     &font8x8_basic
+    // };
+    //
+    // /* initialize the framebuffer */
+    // Framebuffer_Intiailize(gDisplay_Fb,
+    //                        &ptr_fb,
+    //                        ptr_bb.fb_width, ptr_bb.fb_height,
+    //                        &gBasicFont.super);
 
 }
 
@@ -64,6 +64,7 @@ static void InitDynLinker()
 {
 
 }
+
 
 void _start()
 {
@@ -75,14 +76,36 @@ void _start()
 
     InitDisplay();
 
-    Pipe p = GetPipe(0);
-    PutStr(p, "Initializing Memory...\n");
-    Arch_InitMemory();
-    PutStr(p, "\033[0;32mDone!\n\033[m");
+    enum {
+        INIT_INT,
+        INIT_MEM,
+    };
 
-    PutStr(p, "Initializing Interrupts...\n");
-    Arch_InitInterrupts();
-    PutStr(p, "\033[0;32mDone!\n\033[m");
+    int order[] = {
+        INIT_INT,
+        INIT_MEM,
+    };
+
+    Pipe p = GetPipe(0);
+
+    for(int i = 0; i < sizeof(order) / sizeof(int); ++i)
+    {
+        switch(order[i])
+        {
+        case INIT_INT:
+            PutStr(p, "Initializing Interrupts...\n");
+            Arch_InitInterrupts();
+            PutStr(p, "\033[0;32mDone!\n\033[m");
+            break;
+        case INIT_MEM:
+            PutStr(p, "Initializing Memory...\n");
+            Arch_InitMemory();
+            PutStr(p, "\033[0;32mDone!\n\033[m");
+            break;
+        }
+    }
+
+
 
     // PutStr(p, "Testing interrupts... (0, 1, 2, 3)\n");
     // Arch_Interrupt(0);
@@ -102,7 +125,7 @@ void _start()
 
     PutStr(p, "\033[0;33mJumping to userland...\033[m\n");
     extern void TestUserlandFunction();
-    Arch_GotoUserland(&TestUserlandFunction);
+    //Arch_GotoUserland(&TestUserlandFunction);
 
     PutStr(p, "\033[0;33mKernel Terminated\033[m\n");
 
@@ -112,7 +135,7 @@ void _start()
 
 void TestUserlandFunction()
 {
-    asm("wrmsr");
+    //asm("wrmsr");
     for(;;);
 }
 

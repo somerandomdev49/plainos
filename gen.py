@@ -1,9 +1,11 @@
-import glob, subprocess as subp
+import glob, subprocess as subp, sys
 
 src = {
-    'cc': glob.glob('src/**/*.c', recursive=True),
-    'as': glob.glob('src/**/*.s', recursive=True)
+    'cc': glob.glob('src/_Kernel/**/*.c', recursive=True),
+    'as': glob.glob('src/_Kernel/**/*.s', recursive=True)
 }
+
+src['cc'].append('src/IO/Pipe.c')
 
 with open('build.ninja', 'w') as fout:
     fout.write('# generated automatically, edit gen.py instead\n')
@@ -20,7 +22,7 @@ with open('build.ninja', 'w') as fout:
 
     fout.write('\n')
     fout.write('build boot/kernel.elf: ld ' + ' '.join(ofs) + '\n')
-    fout.write('build dist/out.iso: mkbootimg config.json | boot/kernel.elf\n')
+    fout.write('build dist/out.iso: ' + sys.executable + ' geniso.py | boot/kernel.elf\n')
     fout.write('default dist/out.iso\n')
 
 with open('compile_commands.json', 'w') as fout:

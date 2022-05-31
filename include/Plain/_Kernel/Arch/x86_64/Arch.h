@@ -42,14 +42,9 @@ _Static_assert(sizeof(struct GDT_Entry) == 8, "");
 
 struct GDT_Entry64
 {
-    uint16_t lim0;   /* limit 0..15 */
-    uint16_t base0;  /* base 0..15 */
-    uint8_t base1;   /* base 16..23 */
-    uint8_t type;    /* type */
-    uint8_t lim1_fl; /* limit 16..19 + flags */
-    uint8_t base2;   /* base 24..31 */
-    uint32_t base3;  /* base 32..64 */
-    uint32_t res;    /* reserved */
+    struct GDT_Entry e; /* 32-bit entry */
+    uint32_t base3;     /* base 32..64 */
+    uint32_t res;       /* reserved */
 } _ATTRIBUTE(packed);
 
 _Static_assert(sizeof(struct GDT_Entry64) == 16, "");
@@ -58,10 +53,11 @@ struct TSS
 {
     uint32_t res0; /* reserved */
     uint64_t rsp0, /* stack pointer for ring 3|2|1 -> 0 (NB: not checked) */
-             rsp1, /* stack pointer for ring 3|2 -> 1 */ 
+             rsp1, /* stack pointer for ring 3|2 -> 1 */
              rsp2; /* stack pointer for ring 3 -> 2 */
     uint64_t res1; /* reserved */
-    uint64_t ist2, /* Interrupt Stack Table, not used */
+    uint64_t ist1,
+             ist2, /* Interrupt Stack Table, not used */
              ist3, /* not used */
              ist4, /* not used */
              ist5, /* not used */
@@ -70,9 +66,9 @@ struct TSS
     uint64_t res2; /* reserved */
     uint16_t res3; /* reserved */
     uint16_t iopb; /* IO Map Base Address Field (IO perm bit map, not used) */
-} _ATTRIBUTE(packed); 
+} _ATTRIBUTE(packed);
 
-_Static_assert(sizeof(struct TSS) == 96, "");
+_Static_assert(sizeof(struct TSS) == 104, "");
 
 /*- Registers -*/
 struct StackFrame
@@ -105,6 +101,9 @@ void Arch_x86_64_LoadIDT(struct IDT_Entry *ptr,
 /* loads an IDT at ptr, with size `size` */
 void Arch_x86_64_LoadGDT(struct GDT_Entry *ptr,
                          uint16_t size);
+
+/* loads TSS in specified segment */
+void Arch_x86_64_LoadTSS(uint16_t segment);
 
 void Arch_x86_64_EnableSyscallExt();
 void Arch_x86_64_Sysret(uint64_t addr, uint64_t stack);
