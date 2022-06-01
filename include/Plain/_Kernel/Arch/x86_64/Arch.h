@@ -49,6 +49,11 @@ struct GDT_Entry64
 
 _Static_assert(sizeof(struct GDT_Entry64) == 16, "");
 
+struct GDT_Pointer {
+    uint16_t limit;
+    uint64_t addr;
+} _ATTRIBUTE(packed);
+
 struct TSS
 {
     uint32_t res0; /* reserved */
@@ -99,8 +104,7 @@ void Arch_x86_64_LoadIDT(struct IDT_Entry *ptr,
                          uint16_t size);
 
 /* loads an IDT at ptr, with size `size` */
-void Arch_x86_64_LoadGDT(struct GDT_Entry *ptr,
-                         uint16_t size);
+void Arch_x86_64_LoadGDT(struct GDT_Pointer *ptr);
 
 /* loads TSS in specified segment */
 void Arch_x86_64_LoadTSS(uint16_t segment);

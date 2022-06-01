@@ -125,7 +125,7 @@ void _start()
 
     PutStr(p, "\033[0;33mJumping to userland...\033[m\n");
     extern void TestUserlandFunction();
-    //Arch_GotoUserland(&TestUserlandFunction);
+    Arch_GotoUserland(&TestUserlandFunction);
 
     PutStr(p, "\033[0;33mKernel Terminated\033[m\n");
 

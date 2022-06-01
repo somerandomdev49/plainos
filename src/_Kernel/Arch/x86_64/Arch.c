@@ -49,12 +49,14 @@ static void GDT_Entry64_Initialize(struct GDT_Entry64 *this,
 
 #include <Plain/IO/Pipe.h>
 
+static struct GDT_Pointer gGDT_Pointer;
+
 static void SetupGDT()
 {
     Pipe p = GetPipe(0);
     PutStr(p, "Setting up the GDT\n");
 
-    BufferFillZeros(&gTSS, sizeof(gTSS));
+    BufferFillZeros(&gTSS, sizeof(gTSS) - 1);
     gTSS.rsp0 = 0x0000000000000000; /* stack */
     gTSS.iopb = sizeof(gTSS);
 
@@ -64,6 +66,8 @@ static void SetupGDT()
     GDT_Entry_Initialize(&gGDT_Table.kcode, 0, 0xFFFFF, 0x9A, 0xA);
     PutStr(p, "* Kernel Data Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.kdata, 0, 0xFFFFF, 0x92, 0xC);
+    PutStr(p, "* User NULL Segment\n");
+    GDT_Entry_Initialize(&gGDT_Table.unull, 0, 0, 0, 0);
     PutStr(p, "* User Code Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.ucode, 0, 0xFFFFF, 0xFA, 0xA);
     PutStr(p, "* User Data Segment\n");
@@ -76,10 +80,9 @@ static void SetupGDT()
 #undef X
 
     PutStr(p, "Loading the GDT...\n");
-    Arch_x86_64_LoadGDT(&gGDT_Table.null, sizeof(gGDT_Table));
-    PutStr(p, "Done!\n");
-    PutStr(p, "Reloading Segment Registers!\n");
-    Arch_x86_64_ReloadSegments();
+    gGDT_Pointer.addr = (uint64_t)&gGDT_Table;
+    gGDT_Pointer.limit = sizeof(gGDT_Table) - 1;
+    Arch_x86_64_LoadGDT(&gGDT_Pointer);
     PutStr(p, "Done!\n");
     PutStr(p, "Loading TSS!\n");
     Arch_x86_64_LoadTSS(0x30);

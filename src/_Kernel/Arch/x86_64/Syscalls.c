@@ -28,10 +28,10 @@ void Arch_InitSyscalls()
 {
     Arch_x86_64_EnableSyscallExt();
     
-    //SetMSR(EFER_MSR, GetMSR(EFER_MSR) | 1); // enable system call extensions
-    //SetMSR(STAR_MSR, ((uint64_t)2 << 3 << 48) | ((uint64_t)1 << 3 << 32));
-    //SetMSR(LSTAR_MSR, (uint64_t)&Arch_x86_64_SyscallEntry);
-    //SetMSR(SFMASK_MSR, 0x47700); // TF|DF|IF|IOPL|AC|NT
+    // SetMSR(EFER_MSR, GetMSR(EFER_MSR) | 1); // enable system call extensions
+    // SetMSR(STAR_MSR, ((uint64_t)2 << 3 << 48) | ((uint64_t)1 << 3 << 32));
+    // SetMSR(LSTAR_MSR, (uint64_t)&Arch_x86_64_SyscallEntry);
+    // SetMSR(SFMASK_MSR, 0x47700); // TF|DF|IF|IOPL|AC|NT
 }
 
 #define USER_STACK_SIZE 1024
