@@ -22,7 +22,7 @@ with open('build.ninja', 'w') as fout:
 
     fout.write('\n')
     fout.write('build boot/kernel.elf: ld ' + ' '.join(ofs) + '\n')
-    fout.write('build dist/out.iso: ' + sys.executable + ' geniso.py | boot/kernel.elf\n')
+    fout.write('build dist/out.iso: mkbootimg config.json | boot/kernel.elf\n')
     fout.write('default dist/out.iso\n')
 
 with open('compile_commands.json', 'w') as fout:

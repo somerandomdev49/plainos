@@ -5,13 +5,12 @@ struct GDT_Table {
     struct GDT_Entry null;  /* 0x00 */
     struct GDT_Entry kcode; /* 0x08 */
     struct GDT_Entry kdata; /* 0x10 */
-    struct GDT_Entry unull; /* 0x18 */
-    struct GDT_Entry udata; /* 0x20 */
-    struct GDT_Entry ucode; /* 0x28 */
-    struct GDT_Entry64 tss; /* 0x30 */
+    struct GDT_Entry udata; /* 0x18 */
+    struct GDT_Entry ucode; /* 0x20 */
+    struct GDT_Entry64 tss; /* 0x28 */
 } __attribute__((packed));
 
-_Static_assert(sizeof(struct GDT_Table) == 0x40, "");
+// _Static_assert(sizeof(struct GDT_Table) == 0x40, "");
 
 __attribute__((aligned(4096)))
 struct GDT_Table gGDT_Table;
@@ -57,8 +56,8 @@ static void SetupGDT()
     PutStr(p, "Setting up the GDT\n");
 
     BufferFillZeros(&gTSS, sizeof(gTSS) - 1);
-    gTSS.rsp0 = 0x0000000000000000; /* stack */
-    gTSS.iopb = sizeof(gTSS);
+    // gTSS.rsp0 = 0x0000000000000000; /* stack */
+    // gTSS.iopb = sizeof(gTSS);
 
     PutStr(p, "* NULL Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.null, 0, 0, 0, 0);
@@ -66,8 +65,8 @@ static void SetupGDT()
     GDT_Entry_Initialize(&gGDT_Table.kcode, 0, 0xFFFFF, 0x9A, 0xA);
     PutStr(p, "* Kernel Data Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.kdata, 0, 0xFFFFF, 0x92, 0xC);
-    PutStr(p, "* User NULL Segment\n");
-    GDT_Entry_Initialize(&gGDT_Table.unull, 0, 0, 0, 0);
+    //PutStr(p, "* User NULL Segment\n");
+    //GDT_Entry_Initialize(&gGDT_Table.unull, 0, 0, 0, 0);
     PutStr(p, "* User Code Segment\n");
     GDT_Entry_Initialize(&gGDT_Table.ucode, 0, 0xFFFFF, 0xFA, 0xA);
     PutStr(p, "* User Data Segment\n");
@@ -85,7 +84,7 @@ static void SetupGDT()
     Arch_x86_64_LoadGDT(&gGDT_Pointer);
     PutStr(p, "Done!\n");
     PutStr(p, "Loading TSS!\n");
-    Arch_x86_64_LoadTSS(0x30);
+    Arch_x86_64_LoadTSS(0x28);
     PutStr(p, "Done!\n");
 }
 

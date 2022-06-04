@@ -20,7 +20,8 @@ Arch_x86_64_EnableSyscallExt:
     wrmsr                       /* write back new EFER */
     mov $0xC0000081, %rcx       /* STAR MSR */
     rdmsr                       /* read current STAR */
-    mov $0x00180008, %edx       /* load up GDT segment bases 0x0 and 0x18 */
+    mov $0x00100008, %edx       /* [48:64]+8=UDATA, [48:64]+16=UCODE,
+                                   [32:48]=KCODE, [32:48]+8=UDATA */
     wrmsr                       /* write back new STAR */
     ret                         /* return back to C */
 

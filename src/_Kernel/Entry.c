@@ -136,7 +136,7 @@ void _start()
 void TestUserlandFunction()
 {
     //asm("wrmsr");
-    for(;;);
+    for(;;) asm("");
 }
 
 
